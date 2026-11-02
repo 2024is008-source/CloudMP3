@@ -38,7 +38,7 @@ function TrackCard({ item }: { item: SearchResult }) {
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1">
         <CategoryBadge item={item} />
-        <span className="text-[11px] tabular-nums text-muted-foreground">
+        <span className="text-xs tabular-nums text-muted-foreground">
           {formatDuration(item.duration)}
         </span>
       </div>

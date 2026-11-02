@@ -59,12 +59,38 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Type floor. 12px reads as noise on a dark ground and 14px is too small for
+     running copy, so the two workhorse steps are lifted. Every component keeps
+     its own class — only the size it resolves to changes. */
+  --text-xs: 0.8125rem; /* 13px */
+  --text-xs--line-height: 1.5;
+  --text-sm: 1rem; /* 16px */
+  --text-sm--line-height: 1.55;
+  --text-base: 1.0625rem; /* 17px */
+  --text-base--line-height: 1.6;
+  --text-lg: 1.1875rem; /* 19px */
+  --text-lg--line-height: 1.4;
+
+  /* Navigation keeps its own, tighter step: four labels and the search field
+     share one 64px bar and must never wrap. */
+  --text-nav: 0.875rem; /* 14px */
+  --text-nav--line-height: 1.25;
+
+  /* One rhythm: the gap between blocks of content, and the one page frame
+     shared by the nav, the page body and the footer. */
+  --spacing-section: clamp(56px, 6vw, 88px);
+  --container-page: 1024px;
 }
 
 /*
  * Brand palette (hex → oklch):
  * background #090B0F · primary #FF7417 · card #14171D
  * border #262A31 · text #F5F5F5 · muted text #9298A3
+ *
+ * The muted ink is lifted from #9298A3 (6.2:1 on a card) to about 8:1 so body
+ * copy clears WCAG AA, and the outline tone is lifted one step so every 1px
+ * border reads at the same weight against the card fill.
  */
 :root {
   --radius: 1rem;
@@ -79,20 +105,20 @@
   --secondary: oklch(0.238 0.015 261.6);
   --secondary-foreground: oklch(0.97 0 0);
   --muted: oklch(0.238 0.015 261.6);
-  --muted-foreground: oklch(0.678 0.018 262.7);
+  --muted-foreground: oklch(0.755 0.016 262.7);
   --accent: oklch(0.284 0.014 261.7);
   --accent-foreground: oklch(0.97 0 0);
-  --destructive: oklch(0.65 0.2 25);
+  --destructive: oklch(0.71 0.19 25);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.284 0.014 261.7);
-  --input: oklch(0.284 0.014 261.7);
+  --border: oklch(0.312 0.015 261.7);
+  --input: oklch(0.312 0.015 261.7);
   --ring: oklch(0.715 0.192 46.9);
   --chart-1: oklch(0.715 0.192 46.9);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --glow: radial-gradient(60% 50% at 50% 0%, oklch(0.715 0.192 46.9 / 18%), transparent 70%);
+  --glow: radial-gradient(60% 50% at 50% 0%, oklch(0.715 0.192 46.9 / 13%), transparent 70%);
 }
 
 @layer base {
@@ -116,6 +142,17 @@
   h2,
   .font-display {
     font-family: "Space Grotesk", "Inter", sans-serif;
+  }
+
+  /* Headings break evenly instead of leaving a two-word orphan; paragraphs
+     avoid single trailing words. */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
   }
 }
 
@@ -166,12 +203,12 @@
 :root {
   --eq-bar: linear-gradient(
     to top,
-    color-mix(in oklab, var(--primary) 8%, transparent),
-    color-mix(in oklab, var(--primary) 55%, transparent)
+    color-mix(in oklab, var(--primary) 6%, transparent),
+    color-mix(in oklab, var(--primary) 42%, transparent)
   );
   --hero-glow: radial-gradient(
     60% 70% at 50% 0%,
-    color-mix(in oklab, var(--primary) 35%, transparent),
+    color-mix(in oklab, var(--primary) 24%, transparent),
     transparent 70%
   );
   --gradient-brand: linear-gradient(100deg, var(--primary), oklch(0.82 0.15 70), var(--primary));
@@ -185,16 +222,16 @@
     transform: scaleY(1);
   }
 }
+/* Blur on the way in makes the headline unreadable while it lands; a plain
+   fade-and-set reads as finished well before the first scroll. */
 @keyframes rise-in {
   from {
     opacity: 0;
-    transform: translateY(14px);
-    filter: blur(4px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
     transform: none;
-    filter: none;
   }
 }
 @keyframes shimmer {
@@ -226,7 +263,7 @@
     var(--card);
 }
 @utility rise-in {
-  animation: rise-in 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) var(--rise-delay, 0s) both;
+  animation: rise-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) var(--rise-delay, 0s) both;
 }
 @utility text-shimmer {
   background: var(--gradient-brand);

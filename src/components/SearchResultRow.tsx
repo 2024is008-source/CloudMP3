@@ -3,16 +3,16 @@ import { BadgeCheck, Download, Music } from "lucide-react";
 import { CATEGORY_LABELS, formatDuration, type SearchResult } from "@/lib/search-rank";
 import { cn } from "@/lib/utils";
 
-const ORIGINAL_BADGE = "border-primary/35 bg-primary/10 text-primary";
+const ORIGINAL_BADGE = "border-primary/35 bg-primary/10 text-foreground";
 const ALT_BADGE = "border-border bg-secondary text-muted-foreground";
-const PLAYLIST_BADGE = "border-primary/30 bg-transparent text-primary/90";
+const PLAYLIST_BADGE = "border-primary/30 bg-transparent text-primary";
 
 export function CategoryBadge({ item, className }: { item: SearchResult; className?: string }) {
   const label = CATEGORY_LABELS[item.category].toUpperCase();
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center rounded border px-1.5 py-px text-[9px] font-bold tracking-wide",
+        "inline-flex shrink-0 items-center rounded border px-1.5 py-px text-xs font-semibold tracking-wide",
         item.kind === "playlist"
           ? PLAYLIST_BADGE
           : item.category === "original"

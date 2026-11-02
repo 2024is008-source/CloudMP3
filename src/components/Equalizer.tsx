@@ -8,9 +8,12 @@ const BARS = Array.from({ length: 56 }, (_, i) => {
 
 export function Equalizer() {
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[640px] overflow-hidden">
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] overflow-hidden md:h-[640px]"
+    >
       <div className="hero-glow absolute inset-0" />
-      <div className="absolute inset-x-0 bottom-0 flex h-56 items-end justify-center gap-[6px] px-4 opacity-45 [mask-image:linear-gradient(to_top,transparent,black_40%)]">
+      <div className="absolute inset-x-0 bottom-0 flex h-40 items-end justify-center gap-[6px] px-4 opacity-40 [mask-image:linear-gradient(to_top,transparent,black_40%)] md:h-56">
         {BARS.map((b, i) => (
           <span
             key={i}

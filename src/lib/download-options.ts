@@ -91,7 +91,7 @@ export function buildDownloadOptions(
 
     options.push({
       value: "wav",
-      label: "Converted WAV",
+      label: "WAV",
       kbps: WAV_KBPS,
       bytes: null,
       kind: formats?.wavConversion.available ? "wav-ffmpeg" : "wav-browser",

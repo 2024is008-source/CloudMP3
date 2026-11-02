@@ -1,0 +1,1067 @@
+diff --git a/src/components/Footer.tsx b/src/components/Footer.tsx
+index a9fe88c..f153d7b 100644
+--- a/src/components/Footer.tsx
++++ b/src/components/Footer.tsx
+@@ -1,112 +1,160 @@
+ import { Link } from "@tanstack/react-router";
+-import { CircleAlert, Mail } from "lucide-react";
+ 
+-import { BrandMark } from "@/components/Navbar";
+ import { SITE } from "@/lib/site";
+ 
+-const FOOTER_LINK = "text-muted-foreground transition-colors hover:text-foreground";
++/**
++ * The mark built as blocks: one letter per solid rectangle, heights varied,
++ * bottoms on one line. Block i takes its colour from the tone run; only the
++ * primary block carries the accent.
++ */
++const MARK_BLOCKS: Array<{ height: string; tone: "raised" | "primary" }> = [
++  { height: "72%", tone: "raised" },
++  { height: "100%", tone: "raised" },
++  { height: "64%", tone: "raised" },
++  { height: "84%", tone: "raised" },
++  { height: "72%", tone: "raised" },
++  { height: "100%", tone: "primary" },
++  { height: "88%", tone: "raised" },
++  { height: "96%", tone: "raised" },
++];
++
++const FOOTER_LINK =
++  "text-small text-muted-foreground transition-colors hover:text-foreground";
++
++function BlockMark() {
++  const letters = SITE.name.split("");
++  const last = MARK_BLOCKS[MARK_BLOCKS.length - 1] ?? { height: "100%", tone: "raised" };
+ 
+-export function Footer() {
+   return (
+-    <footer className="mt-20 border-t border-border/60 bg-card/40">
+-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:grid-cols-2 lg:grid-cols-4">
+-        <div>
+-          <div className="flex items-center gap-2.5">
+-            <BrandMark />
+-            <span className="font-display text-lg font-bold tracking-tight">{SITE.name}</span>
+-          </div>
+-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{SITE.tagline}</p>
+-          <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground">
+-            <span className="relative flex h-2 w-2">
+-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
+-              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
++    <div
++      className="flex h-[clamp(76px,10vw,132px)] items-end gap-1"
++      aria-label={SITE.name}
++      role="img"
++    >
++      {letters.map((ch, i) => {
++        const block = MARK_BLOCKS[i] ?? last;
++        return (
++          <span
++            key={`${ch}-${i}`}
++            className={
++              block.tone === "primary"
++                ? "flex aspect-square w-[clamp(40px,5.4vw,72px)] items-center justify-center bg-primary"
++                : "flex aspect-square w-[clamp(40px,5.4vw,72px)] items-center justify-center bg-tile-raised"
++            }
++            style={{ height: block.height }}
++          >
++            <span
++              className={
++                block.tone === "primary"
++                  ? "font-display text-[clamp(1.5rem,3vw,2.5rem)] leading-none font-semibold text-primary-foreground"
++                  : "font-display text-[clamp(1.5rem,3vw,2.5rem)] leading-none font-semibold text-foreground"
++              }
++            >
++              {ch}
+             </span>
+-            All Systems Operational
+-          </p>
+-        </div>
++          </span>
++        );
++      })}
++    </div>
++  );
++}
+ 
+-        <div>
+-          <h2 className="text-sm font-semibold text-foreground">Navigation</h2>
+-          <ul className="mt-4 space-y-2.5 text-sm">
+-            <li>
+-              <Link to="/" search={{ focus: false }} className={FOOTER_LINK}>
+-                Home
+-              </Link>
+-            </li>
+-            <li>
+-              <Link to="/how-to-download" className={FOOTER_LINK}>
+-                How to Download
+-              </Link>
+-            </li>
+-            <li>
+-              <Link to="/faq" className={FOOTER_LINK}>
+-                Features &amp; FAQ
+-              </Link>
+-            </li>
+-          </ul>
+-        </div>
++function LinkColumn({ heading, children }: { heading: string; children: React.ReactNode }) {
++  return (
++    <div>
++      <h2 className="text-small font-semibold text-foreground">{heading}</h2>
++      <ul className="mt-4 space-y-3">{children}</ul>
++    </div>
++  );
++}
+ 
+-        <div>
+-          <h2 className="text-sm font-semibold text-foreground">Legal</h2>
+-          <ul className="mt-4 space-y-2.5 text-sm">
+-            <li>
+-              <Link to="/terms" className={FOOTER_LINK}>
+-                Terms of Service
+-              </Link>
+-            </li>
+-            <li>
+-              <Link to="/privacy" className={FOOTER_LINK}>
+-                Privacy Policy
+-              </Link>
+-            </li>
+-            <li>
+-              <Link to="/dmca" className={FOOTER_LINK}>
+-                DMCA &amp; Copyright
+-              </Link>
+-            </li>
+-          </ul>
+-        </div>
++export function Footer() {
++  return (
++    <footer className="mt-section bg-tile px-frame pb-8 pt-section">
++      <BlockMark />
++
++      <div className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
++        <LinkColumn heading="Use the board">
++          <li>
++            <Link to="/" search={{ focus: false }} className={FOOTER_LINK}>
++              Home
++            </Link>
++          </li>
++          <li>
++            <Link to="/how-to-download" className={FOOTER_LINK}>
++              How to Download
++            </Link>
++          </li>
++          <li>
++            <Link to="/faq" className={FOOTER_LINK}>
++              Features &amp; FAQ
++            </Link>
++          </li>
++          <li>
++            <Link to="/search" search={{ q: "", tab: "all" }} className={FOOTER_LINK}>
++              Search SoundCloud
++            </Link>
++          </li>
++        </LinkColumn>
++
++        <LinkColumn heading="Legal">
++          <li>
++            <Link to="/terms" className={FOOTER_LINK}>
++              Terms of Service
++            </Link>
++          </li>
++          <li>
++            <Link to="/privacy" className={FOOTER_LINK}>
++              Privacy Policy
++            </Link>
++          </li>
++          <li>
++            <Link to="/dmca" className={FOOTER_LINK}>
++              DMCA &amp; Copyright
++            </Link>
++          </li>
++        </LinkColumn>
++
++        <LinkColumn heading="Support">
++          <li>
++            <Link to="/contact" className={FOOTER_LINK}>
++              Contact &amp; Support
++            </Link>
++          </li>
++          <li>
++            <Link to="/contact" search={{ topic: "broken-link" }} className={FOOTER_LINK}>
++              Report a broken link
++            </Link>
++          </li>
++        </LinkColumn>
+ 
+         <div>
+-          <h2 className="text-sm font-semibold text-foreground">Support</h2>
+-          <ul className="mt-4 space-y-2.5 text-sm">
+-            <li>
+-              <Link to="/contact" className={FOOTER_LINK}>
+-                Contact &amp; Support
+-              </Link>
+-            </li>
+-            <li>
+-              <Link
+-                to="/contact"
+-                search={{ topic: "broken-link" }}
+-                className={`inline-flex items-center gap-1.5 ${FOOTER_LINK}`}
+-              >
+-                <CircleAlert className="h-3.5 w-3.5" /> Report Broken Link
+-              </Link>
+-            </li>
+-            <li>
+-              <a
+-                href={`mailto:${SITE.supportEmail}`}
+-                className={`inline-flex items-center gap-1.5 ${FOOTER_LINK}`}
+-              >
+-                <Mail className="h-3.5 w-3.5" /> {SITE.supportEmail}
+-              </a>
+-            </li>
+-          </ul>
++          <h2 className="text-small font-semibold text-foreground">Write to us</h2>
++          <p className="mt-4 text-small leading-relaxed text-muted-foreground">{SITE.tagline}</p>
++          <p className="mt-4 text-small">
++            <a
++              href={`mailto:${SITE.supportEmail}`}
++              className="text-primary transition-colors hover:text-primary/80"
++            >
++              {SITE.supportEmail}
++            </a>
++          </p>
+         </div>
+       </div>
+ 
+-      <div className="border-t border-border/60">
+-        <div className="mx-auto max-w-6xl px-4 py-6 text-xs leading-relaxed text-muted-foreground">
+-          <p>
+-            © {new Date().getFullYear()} {SITE.name}. All rights reserved.
+-          </p>
+-          <p className="mt-2">
+-            Disclaimer: {SITE.name} ({SITE.domain}) is not affiliated with, endorsed by, or
+-            associated with SoundCloud Limited. All trademarks, service marks, and logos belong to
+-            their respective owners.
+-          </p>
+-        </div>
++      <div className="mt-14 flex flex-col gap-6 pt-8 md:flex-row md:items-end md:justify-between">
++        <p className="max-w-copy text-small leading-relaxed text-muted-foreground">
++          © {new Date().getFullYear()} {SITE.name} ({SITE.domain}). {SITE.name} is an independent
++          tool and is not affiliated with, endorsed by, or associated with SoundCloud Limited. All
++          trademarks, service marks, and logos belong to their respective owners.
++        </p>
++        <Link
++          to="/"
++          search={{ focus: false }}
++          className="inline-flex h-11 shrink-0 items-center justify-center rounded-lg bg-primary px-5 text-small font-medium text-primary-foreground transition-colors hover:bg-primary/85"
++        >
++          Download a track
++        </Link>
+       </div>
+     </footer>
+   );
+diff --git a/src/components/HeaderSearch.tsx b/src/components/HeaderSearch.tsx
+index 42e2417..b09803f 100644
+--- a/src/components/HeaderSearch.tsx
++++ b/src/components/HeaderSearch.tsx
+@@ -121,7 +121,7 @@ export function HeaderSearch({
+         }}
+         placeholder="Search artist or song..."
+         aria-label="Search SoundCloud"
+-        className="w-full rounded-full border border-border bg-secondary/90 py-2.5 pl-9 pr-8 text-base text-foreground outline-none transition-all placeholder:text-muted-foreground hover:bg-secondary focus:border-primary/70 focus:bg-secondary md:py-1.5 md:text-sm"
++        className="w-full rounded-lg bg-tile-raised py-2.5 pl-9 pr-8 text-body text-foreground outline-none transition-colors placeholder:text-muted-foreground hover:bg-accent focus:bg-accent md:py-2 md:text-small"
+       />
+       {busy ? (
+         <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-primary" />
+@@ -141,15 +141,15 @@ export function HeaderSearch({
+       ) : null}
+ 
+       {open && query.trim().length >= MIN_CHARS && (
+-        <div className="fixed inset-x-4 top-[4.25rem] z-50 flex max-h-[70vh] flex-col overflow-hidden rounded-2xl border border-border bg-popover shadow-2xl md:absolute md:inset-x-auto md:right-0 md:top-full md:mt-2 md:max-h-none md:w-96">
+-          <div className="shrink-0 border-b border-border/80 bg-secondary/40 p-2">
+-            <SearchTabs value={tab} onChange={setTab} className="border-0 bg-transparent p-0" />
++        <div className="fixed inset-x-3 top-[4.25rem] z-50 flex max-h-[70vh] flex-col overflow-hidden rounded-lg bg-popover md:absolute md:inset-x-auto md:right-0 md:top-full md:mt-2 md:max-h-none md:w-96">
++          <div className="shrink-0 bg-tile p-2">
++            <SearchTabs value={tab} onChange={setTab} className="rounded-lg bg-transparent p-0" />
+           </div>
+ 
+           <div className="no-scrollbar max-h-96 min-h-0 flex-1 overflow-y-auto" aria-busy={busy}>
+             {error ? (
+-              <p role="alert" className="flex items-start gap-2 p-4 text-xs text-destructive">
+-                <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" /> {error}
++              <p role="alert" className="flex items-start gap-2 p-4 text-small text-destructive">
++                <AlertCircle className="mt-px h-4 w-4 shrink-0" /> {error}
+               </p>
+             ) : busy && results.length === 0 ? (
+               Array.from({ length: 3 }).map((_, i) => <SearchResultSkeleton key={i} />)
+@@ -160,11 +160,11 @@ export function HeaderSearch({
+                   item={r}
+                   onOpen={(item) => select(item, false)}
+                   onDownload={(item) => select(item, item.kind === "track")}
+-                  className="border-b border-border/40 last:border-0"
++                  className="bg-transparent hover:bg-tile"
+                 />
+               ))
+             ) : searched && !busy ? (
+-              <p className="p-4 text-center text-xs text-muted-foreground">
++              <p className="p-4 text-small text-muted-foreground">
+                 No {tab === "all" ? "" : `${tab} `}results found.
+               </p>
+             ) : null}
+@@ -173,7 +173,7 @@ export function HeaderSearch({
+           <button
+             type="button"
+             onClick={seeAll}
+-            className="w-full shrink-0 border-t border-border/80 bg-secondary/30 px-3 py-2.5 text-left text-xs font-semibold text-primary transition hover:bg-secondary/60"
++            className="w-full shrink-0 bg-tile px-4 py-3 text-left text-small font-medium text-primary transition-colors hover:bg-tile-raised"
+           >
+             See all results for “{query.trim()}” →
+           </button>
+diff --git a/src/components/Navbar.tsx b/src/components/Navbar.tsx
+index 4cde0cb..7f4d615 100644
+--- a/src/components/Navbar.tsx
++++ b/src/components/Navbar.tsx
+@@ -1,6 +1,6 @@
+ import { Link } from "@tanstack/react-router";
+ import { Menu, Search, X } from "lucide-react";
+-import { useEffect, useState } from "react";
++import { useState } from "react";
+ 
+ import { HeaderSearch } from "@/components/HeaderSearch";
+ import { SITE } from "@/lib/site";
+@@ -10,51 +10,35 @@ export function BrandMark({ className }: { className?: string }) {
+   return (
+     <span
+       className={cn(
+-        "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary",
++        "flex h-8 w-8 shrink-0 items-center justify-center gap-[3px] bg-primary",
+         className,
+       )}
++      aria-hidden="true"
+     >
+-      <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary-foreground/15">
+-        <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground" />
+-      </span>
++      <span className="h-2.5 w-[3px] rounded-[1px] bg-primary-foreground" />
++      <span className="h-4 w-[3px] rounded-[1px] bg-primary-foreground" />
++      <span className="h-3 w-[3px] rounded-[1px] bg-primary-foreground" />
+     </span>
+   );
+ }
+ 
+ const LINK_CLASS =
+-  "rounded-full px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
+-const ACTIVE_CLASS = "bg-secondary text-foreground";
++  "rounded-lg px-3 py-2 text-small font-medium text-muted-foreground transition-colors hover:bg-tile hover:text-foreground";
++const ACTIVE_CLASS = "bg-tile text-foreground";
+ const ICON_BTN =
+-  "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border text-foreground";
++  "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-tile text-foreground transition-colors hover:bg-tile-raised";
+ 
+ export function Navbar() {
+   const [open, setOpen] = useState(false);
+   const [searchOpen, setSearchOpen] = useState(false);
+-  const [scrolled, setScrolled] = useState(false);
+   const close = () => {
+     setOpen(false);
+     setSearchOpen(false);
+   };
+ 
+-  useEffect(() => {
+-    const onScroll = () => setScrolled(window.scrollY > 8);
+-    onScroll();
+-    window.addEventListener("scroll", onScroll, { passive: true });
+-    return () => window.removeEventListener("scroll", onScroll);
+-  }, []);
+-
+-  const solid = scrolled || open || searchOpen;
+-
+   return (
+-    <header
+-      className={cn(
+-        "fixed inset-x-0 top-0 z-50 transition-colors duration-300",
+-        solid
+-          ? "border-b border-border/60 bg-background/80 backdrop-blur-md"
+-          : "border-b border-transparent bg-transparent",
+-      )}
+-    >
+-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
++    <header className="fixed inset-x-0 top-0 z-50 bg-tile">
++      <div className="flex h-16 items-center justify-between gap-4 px-frame">
+         <Link
+           to="/"
+           search={{ focus: false }}
+@@ -64,7 +48,7 @@ export function Navbar() {
+           <BrandMark />
+           <span
+             className={cn(
+-              "font-display text-lg font-bold tracking-tight text-foreground",
++              "font-display text-lg font-semibold tracking-tight text-foreground",
+               searchOpen && "max-md:hidden",
+             )}
+           >
+@@ -145,34 +129,34 @@ export function Navbar() {
+       </div>
+ 
+       {open && (
+-        <nav className="border-t border-border/60 bg-background px-4 pb-5 pt-1 shadow-2xl md:hidden">
++        <nav className="bg-tile px-frame pb-4 pt-1 md:hidden">
+           <div className="flex flex-col gap-1 pt-2">
+             <Link
+               to="/"
+               search={{ focus: false }}
+               onClick={close}
+-              className="rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
++              className="rounded-lg px-3 py-3 text-body font-medium text-muted-foreground transition-colors hover:bg-tile-raised hover:text-foreground"
+             >
+               Home
+             </Link>
+             <Link
+               to="/how-to-download"
+               onClick={close}
+-              className="rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
++              className="rounded-lg px-3 py-3 text-body font-medium text-muted-foreground transition-colors hover:bg-tile-raised hover:text-foreground"
+             >
+               How to Download
+             </Link>
+             <Link
+               to="/faq"
+               onClick={close}
+-              className="rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
++              className="rounded-lg px-3 py-3 text-body font-medium text-muted-foreground transition-colors hover:bg-tile-raised hover:text-foreground"
+             >
+               Features &amp; FAQ
+             </Link>
+             <Link
+               to="/contact"
+               onClick={close}
+-              className="rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
++              className="rounded-lg px-3 py-3 text-body font-medium text-muted-foreground transition-colors hover:bg-tile-raised hover:text-foreground"
+             >
+               Contact / Report
+             </Link>
+diff --git a/src/components/Page.tsx b/src/components/Page.tsx
+index 58130dc..d124231 100644
+--- a/src/components/Page.tsx
++++ b/src/components/Page.tsx
+@@ -2,24 +2,13 @@ import type { ReactNode } from "react";
+ 
+ import { SITE } from "@/lib/site";
+ 
+-export function PageHero({
+-  eyebrow,
+-  title,
+-  subtitle,
+-}: {
+-  eyebrow?: string;
+-  title: string;
+-  subtitle: string;
+-}) {
++export function PageHero({ title, subtitle }: { title: string; subtitle: string }) {
+   return (
+-    <section className="mx-auto max-w-3xl px-4 pt-14 text-center md:pt-20">
+-      {eyebrow && (
+-        <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground">
+-          {eyebrow}
+-        </span>
+-      )}
+-      <h1 className="mt-5 text-4xl font-bold tracking-tight md:text-5xl">{title}</h1>
+-      <p className="mt-3 text-muted-foreground">{subtitle}</p>
++    <section className="px-frame pt-section">
++      <div className="mx-auto w-full max-w-board">
++        <h1 className="max-w-copy text-head font-semibold">{title}</h1>
++        <p className="mt-5 max-w-copy text-lead text-muted-foreground">{subtitle}</p>
++      </div>
+     </section>
+   );
+ }
+@@ -36,12 +25,14 @@ export function LegalPage({
+   children: ReactNode;
+ }) {
+   return (
+-    <main className="mx-auto max-w-4xl px-4 py-14">
+-      <p className="text-xs uppercase tracking-wider text-muted-foreground">{SITE.name} · {SITE.domain}</p>
+-      <h1 className="mt-3 text-4xl font-bold tracking-tight">{title}</h1>
+-      <p className="mt-2 text-sm text-muted-foreground">Last updated: {updated}</p>
+-      <p className="mt-6 text-sm leading-relaxed text-muted-foreground">{intro}</p>
+-      <div className="mt-10 space-y-10">{children}</div>
++    <main className="mx-auto w-full max-w-copy px-frame py-section">
++      <h1 className="text-head font-semibold">{title}</h1>
++      <p className="mt-5 text-small text-muted-foreground">Last updated: {updated}</p>
++      <p className="mt-8 text-body">{intro}</p>
++      <div className="mt-14 space-y-12">{children}</div>
++      <p className="mt-14 text-small text-muted-foreground">
++        {SITE.name} · {SITE.domain}
++      </p>
+     </main>
+   );
+ }
+@@ -49,8 +40,8 @@ export function LegalPage({
+ export function LegalSection({ heading, children }: { heading: string; children: ReactNode }) {
+   return (
+     <section>
+-      <h2 className="text-xl font-semibold tracking-tight">{heading}</h2>
+-      <div className="mt-3 space-y-3 text-sm leading-relaxed text-muted-foreground">{children}</div>
++      <h2 className="text-lead font-semibold">{heading}</h2>
++      <div className="mt-4 space-y-4 text-body">{children}</div>
+     </section>
+   );
+ }
+diff --git a/src/routes/__root.tsx b/src/routes/__root.tsx
+index c58320e..c60af13 100644
+--- a/src/routes/__root.tsx
++++ b/src/routes/__root.tsx
+@@ -19,24 +19,24 @@ import { absoluteUrl } from "@/lib/seo";
+ 
+ function NotFoundComponent() {
+   return (
+-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+-      <div className="max-w-md text-center">
+-        <h1 className="text-7xl font-bold text-foreground">404</h1>
+-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
+-        <p className="mt-2 text-sm text-muted-foreground">
+-          The page you're looking for doesn't exist or has been moved.
++    <main className="mx-auto w-full max-w-board px-frame py-section">
++      <div className="tile rise-in max-w-xl">
++        <p className="figures text-lead font-semibold text-primary">404</p>
++        <h1 className="mt-3 text-head font-semibold">Page not found</h1>
++        <p className="mt-4 text-body text-muted-foreground">
++          That address isn't on this board. It may have been renamed, or the link was mistyped.
+         </p>
+-        <div className="mt-6">
++        <div className="mt-8">
+           <Link
+             to="/"
+             search={{ focus: false }}
+-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
++            className="inline-flex items-center justify-center rounded-lg bg-primary px-5 py-3 text-body font-medium text-primary-foreground transition-colors hover:bg-primary/85"
+           >
+-            Go home
++            Go to the downloader
+           </Link>
+         </div>
+       </div>
+-    </div>
++    </main>
+   );
+ }
+ 
+@@ -45,33 +45,32 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
+   const router = useRouter();
+ 
+   return (
+-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+-      <div className="max-w-md text-center">
+-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
+-          This page didn't load
+-        </h1>
+-        <p className="mt-2 text-sm text-muted-foreground">
+-          Something went wrong on our end. You can try refreshing or head back home.
++    <main className="mx-auto w-full max-w-board px-frame py-section">
++      <div className="tile rise-in max-w-xl">
++        <p className="text-small font-medium text-destructive">Loading error</p>
++        <h1 className="mt-3 text-head font-semibold">This page didn't load</h1>
++        <p className="mt-4 text-body text-muted-foreground">
++          Something went wrong on our end. You can try again or head back to the downloader.
+         </p>
+-        <div className="mt-6 flex flex-wrap justify-center gap-2">
++        <div className="mt-8 flex flex-wrap gap-3">
+           <button
+             onClick={() => {
+               router.invalidate();
+               reset();
+             }}
+-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
++            className="inline-flex items-center justify-center rounded-lg bg-primary px-5 py-3 text-body font-medium text-primary-foreground transition-colors hover:bg-primary/85"
+           >
+             Try again
+           </button>
+           <a
+             href="/"
+-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
++            className="inline-flex items-center justify-center rounded-lg bg-tile-raised px-5 py-3 text-body font-medium text-foreground transition-colors hover:bg-accent"
+           >
+             Go home
+           </a>
+         </div>
+       </div>
+-    </div>
++    </main>
+   );
+ }
+ 
+@@ -90,9 +89,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
+         rel: "stylesheet",
+         href: appCss,
+       },
+-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" },
++      { rel: "preconnect", href: "https://api.fontshare.com" },
++      { rel: "preconnect", href: "https://cdn.fontshare.com", crossOrigin: "anonymous" },
++      {
++        rel: "stylesheet",
++        href: "https://api.fontshare.com/v2/css?f[]=switzer@400,500,600&display=swap",
++      },
+       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+@@ -146,7 +148,7 @@ function RootComponent() {
+ 
+   return (
+     <QueryClientProvider client={queryClient}>
+-      <div className="flex min-h-screen flex-col">
++      <div className="flex min-h-svh flex-col">
+         <Navbar />
+         <div className="flex-1 pt-16">
+           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+diff --git a/src/routes/contact.tsx b/src/routes/contact.tsx
+index 0074e55..69de9d4 100644
+--- a/src/routes/contact.tsx
++++ b/src/routes/contact.tsx
+@@ -52,7 +52,6 @@ function Contact() {
+   return (
+     <main>
+       <PageHero
+-        eyebrow="Support"
+         title="Get in Touch"
+         subtitle="Report an issue with a URL, give feedback, or reach out with general inquiries."
+       />
+diff --git a/src/routes/faq.tsx b/src/routes/faq.tsx
+index df76a9f..3e3ed97 100644
+--- a/src/routes/faq.tsx
++++ b/src/routes/faq.tsx
+@@ -82,7 +82,6 @@ function Faq() {
+   return (
+     <main>
+       <PageHero
+-        eyebrow="Features & FAQ"
+         title="Features & Frequently Asked Questions"
+         subtitle={`Everything you need to know about ${SITE.name}'s audio quality, playlist extraction, and limitations.`}
+       />
+diff --git a/src/routes/how-to-download.tsx b/src/routes/how-to-download.tsx
+index 786bb09..e78efc9 100644
+--- a/src/routes/how-to-download.tsx
++++ b/src/routes/how-to-download.tsx
+@@ -108,9 +108,8 @@ function HowTo() {
+   return (
+     <main>
+       <PageHero
+-        eyebrow="Guide"
+-        title="How to Download Tracks and Playlists from SoundCloud"
+-        subtitle="A simple, step-by-step visual guide for desktop, iOS, and Android."
++        title="How to Download from SoundCloud"
++        subtitle="A step-by-step guide for tracks and playlists, on desktop, iPhone, and Android."
+       />
+ 
+       <div className="mx-auto mt-10 max-w-4xl px-4">
+diff --git a/src/styles.css b/src/styles.css
+index 6a9bc16..a81402a 100644
+--- a/src/styles.css
++++ b/src/styles.css
+@@ -5,28 +5,32 @@
+ @custom-variant dark (&:is(.dark *));
+ 
+ /*
+- * Design system definition.
++ * Design system — "The well-kept board".
+  *
+- * The @theme inline block maps CSS custom properties to Tailwind utility
+- * classes (e.g. --color-primary -> bg-primary, text-primary).
++ * One ground, one ink, one accent. Surfaces are separated by a step in tone,
++ * never by a border or a shadow. One corner radius for everything. Five type
++ * steps, body at 17px and up.
+  *
+- * The :root and .dark blocks define the actual color values using oklch.
+- * All colors MUST use oklch format.
+- *
+- * To add a new semantic color:
+- * 1. Add the variable to :root (light value) and .dark (dark value)
+- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
++ * The @theme inline block maps CSS custom properties to Tailwind utilities
++ * (--color-primary -> bg-primary/text-primary, --text-body -> text-body).
++ * Values live in :root and MUST stay in oklch. New semantic colour:
++ * add it to :root, then register --color-<name>: var(--<name>) in @theme inline.
+  */
+ 
+ @theme inline {
+-  --radius-sm: calc(var(--radius) - 4px);
+-  --radius-md: calc(var(--radius) - 2px);
++  /* One radius. The scale collapses onto it so legacy rounded-lg/xl/2xl cannot
++     drift back into the soft-bento look. */
++  --radius-sm: 4px;
++  --radius-md: 6px;
+   --radius-lg: var(--radius);
+-  --radius-xl: calc(var(--radius) + 4px);
+-  --radius-2xl: calc(var(--radius) + 8px);
+-  --radius-3xl: calc(var(--radius) + 12px);
+-  --radius-4xl: calc(var(--radius) + 16px);
++  --radius-xl: var(--radius);
++  --radius-2xl: var(--radius);
++  --radius-3xl: var(--radius);
++  --radius-4xl: var(--radius);
++
+   --color-background: var(--background);
++  --color-tile: var(--tile);
++  --color-tile-raised: var(--tile-raised);
+   --color-foreground: var(--foreground);
+   --color-card: var(--card);
+   --color-card-foreground: var(--card-foreground);
+@@ -42,6 +46,10 @@
+   --color-accent-foreground: var(--accent-foreground);
+   --color-destructive: var(--destructive);
+   --color-destructive-foreground: var(--destructive-foreground);
++  --color-success: var(--success);
++  --color-success-foreground: var(--success-foreground);
++  --color-warning: var(--warning);
++  --color-warning-foreground: var(--warning-foreground);
+   --color-border: var(--border);
+   --color-input: var(--input);
+   --color-ring: var(--ring);
+@@ -59,69 +67,130 @@
+   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+   --color-sidebar-border: var(--sidebar-border);
+   --color-sidebar-ring: var(--sidebar-ring);
++
++  /* Board rhythm: 8px between tiles, 12px at the page edge. */
++  --spacing-board: 8px;
++  --spacing-frame: 12px;
++  --spacing-section: clamp(72px, 9vw, 160px);
++
++  /* Two widths only: the board the tiles fill, and the column prose is read in. */
++  --container-board: 1440px;
++  --container-copy: 760px;
++
++  /* Type. One grotesk, two working weights, five steps. */
++  --font-sans: "Switzer", "Inter", system-ui, sans-serif;
++  --font-display: "Switzer", "Inter", system-ui, sans-serif;
++
++  --text-small: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
++  --text-small--line-height: 1.45;
++  --text-small--letter-spacing: -0.005em;
++  --text-body: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
++  --text-body--line-height: 1.5;
++  --text-body--letter-spacing: -0.005em;
++  --text-lead: clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem);
++  --text-lead--line-height: 1.3;
++  --text-lead--letter-spacing: -0.02em;
++  --text-head: clamp(2rem, 1.3rem + 3.2vw, 4rem);
++  --text-head--line-height: 0.95;
++  --text-head--letter-spacing: -0.04em;
++  --text-band: clamp(3.25rem, 1.6rem + 8.2vw, 9rem);
++  --text-band--line-height: 0.88;
++  --text-band--letter-spacing: -0.045em;
++
++  /* Raised floor for the legacy steps: nothing readable sits below 13px. */
++  --text-xs: var(--text-small);
++  --text-sm: 1rem;
++  --text-base: var(--text-body);
+ }
+ 
+ /*
+- * Brand palette (hex → oklch):
+- * background #090B0F · primary #FF7417 · card #14171D
+- * border #262A31 · text #F5F5F5 · muted text #9298A3
++ * Brand palette. Ground #090B0F · tile #14171D · accent #FF7417 (kept from the
++ * existing brand) · ink #F5F5F5.
+  */
+ :root {
+-  --radius: 1rem;
++  --radius: 8px;
++
+   --background: oklch(0.149 0.009 264);
++  --tile: oklch(0.204 0.013 264.2);
++  --tile-raised: oklch(0.246 0.015 262);
++
+   --foreground: oklch(0.97 0 0);
++  --muted-foreground: oklch(0.74 0.018 262);
++
+   --card: oklch(0.204 0.013 264.2);
+   --card-foreground: oklch(0.97 0 0);
+-  --popover: oklch(0.204 0.013 264.2);
++  --popover: oklch(0.214 0.013 264.2);
+   --popover-foreground: oklch(0.97 0 0);
++
+   --primary: oklch(0.715 0.192 46.9);
+   --primary-foreground: oklch(0.149 0.009 264);
+-  --secondary: oklch(0.238 0.015 261.6);
++  --secondary: oklch(0.246 0.015 262);
+   --secondary-foreground: oklch(0.97 0 0);
+-  --muted: oklch(0.238 0.015 261.6);
+-  --muted-foreground: oklch(0.678 0.018 262.7);
++  --muted: oklch(0.246 0.015 262);
+   --accent: oklch(0.284 0.014 261.7);
+   --accent-foreground: oklch(0.97 0 0);
+-  --destructive: oklch(0.65 0.2 25);
+-  --destructive-foreground: oklch(0.98 0 0);
+-  --border: oklch(0.284 0.014 261.7);
+-  --input: oklch(0.284 0.014 261.7);
++
++  /* Status is never colour alone: every one of these ships with a word. */
++  --destructive: oklch(0.71 0.19 25);
++  --destructive-foreground: oklch(0.149 0.009 264);
++  --success: oklch(0.74 0.15 155);
++  --success-foreground: oklch(0.149 0.009 264);
++  --warning: oklch(0.8 0.14 80);
++  --warning-foreground: oklch(0.149 0.009 264);
++
++  --border: oklch(0.3 0.014 261.7);
++  --input: oklch(0.3 0.014 261.7);
+   --ring: oklch(0.715 0.192 46.9);
++
+   --chart-1: oklch(0.715 0.192 46.9);
+   --chart-2: oklch(0.6 0.118 184.704);
+   --chart-3: oklch(0.398 0.07 227.392);
+   --chart-4: oklch(0.828 0.189 84.429);
+   --chart-5: oklch(0.769 0.188 70.08);
+-  --glow: radial-gradient(60% 50% at 50% 0%, oklch(0.715 0.192 46.9 / 18%), transparent 70%);
+ }
+ 
+ @layer base {
+-  * {
+-    border-color: var(--color-border);
+-  }
+-
+   html {
+     scroll-behavior: smooth;
+   }
+ 
+   body {
+-    background-color: var(--color-background);
+-    color: var(--color-foreground);
+-    background-image: var(--glow);
+-    background-repeat: no-repeat;
+-    font-family: "Inter", system-ui, sans-serif;
+-    font-feature-settings: "cv11", "ss01";
++    background-color: var(--background);
++    color: var(--foreground);
++    font-family: var(--font-sans);
++    font-size: var(--text-body);
++    line-height: 1.5;
++    letter-spacing: -0.005em;
++    -webkit-font-smoothing: antialiased;
+   }
++
++  /* Running text is the full ink. Muted ink is for secondary notes only. */
+   h1,
+   h2,
+-  .font-display {
+-    font-family: "Space Grotesk", "Inter", sans-serif;
++  h3,
++  h4 {
++    font-family: var(--font-display);
++    color: var(--foreground);
++    text-wrap: balance;
++  }
++
++  /* Visible keyboard focus, one ring style for the whole board. */
++  :focus-visible {
++    outline: 2px solid var(--ring);
++    outline-offset: 2px;
++  }
++
++  ::selection {
++    background: var(--primary);
++    color: var(--primary-foreground);
+   }
+ }
+ 
+-/* Scrollbars: the platform default is a light bar with arrow buttons that clashes
+-   with the dark theme. Standard properties for Chrome 121+/Firefox, -webkit for Safari.
+-   Kept in @layer base so utilities such as no-scrollbar can override them. */
++/*
++ * Scrollbars: the platform default is a light bar with arrow buttons that clashes
++ * with the dark theme. Standard properties for Chrome 121+/Firefox, -webkit for Safari.
++ * Kept in @layer base so utilities such as no-scrollbar can override them.
++ */
+ @layer base {
+   :root {
+     color-scheme: dark;
+@@ -162,19 +231,28 @@
+   }
+ }
+ 
+-/* ---------- Hero motion: equalizer, glow, rise-in ---------- */
++/* Figures that line up: sizes, bitrates, durations. */
++@utility figures {
++  font-variant-numeric: tabular-nums;
++}
++
++/* ---------- Board ---------- */
++@utility board {
++  display: grid;
++  grid-template-columns: repeat(12, minmax(0, 1fr));
++  gap: var(--spacing-board);
++}
++
++/* A tile is a filled rectangle: tone step, one radius, top-left text. */
++@utility tile {
++  background: var(--tile);
++  border-radius: var(--radius);
++  padding: 20px;
++}
++
++/* ---------- Equalizer motif ---------- */
+ :root {
+-  --eq-bar: linear-gradient(
+-    to top,
+-    color-mix(in oklab, var(--primary) 8%, transparent),
+-    color-mix(in oklab, var(--primary) 55%, transparent)
+-  );
+-  --hero-glow: radial-gradient(
+-    60% 70% at 50% 0%,
+-    color-mix(in oklab, var(--primary) 35%, transparent),
+-    transparent 70%
+-  );
+-  --gradient-brand: linear-gradient(100deg, var(--primary), oklch(0.82 0.15 70), var(--primary));
++  --eq-bar: color-mix(in oklab, var(--primary) 40%, transparent);
+ }
+ @keyframes eq-bounce {
+   0%,
+@@ -185,106 +263,84 @@
+     transform: scaleY(1);
+   }
+ }
++@utility eq-bar {
++  background: var(--eq-bar);
++  border-radius: 2px 2px 0 0;
++  transform-origin: bottom;
++  animation: eq-bounce var(--eq-dur, 1.6s) ease-in-out var(--eq-delay, 0s) infinite;
++}
++
++/* ---------- Section entrance ---------- */
+ @keyframes rise-in {
+   from {
+     opacity: 0;
+-    transform: translateY(14px);
+-    filter: blur(4px);
++    transform: translateY(12px);
+   }
+   to {
+     opacity: 1;
+     transform: none;
+-    filter: none;
+   }
+ }
+-@keyframes shimmer {
++@utility rise-in {
++  animation: rise-in 0.35s cubic-bezier(0.2, 0.7, 0.2, 1) var(--rise-delay, 0s) both;
++}
++
++/* ---------- Marquee ---------- */
++@keyframes marquee {
++  from {
++    transform: translateX(0);
++  }
+   to {
+-    background-position: 200% center;
++    transform: translateX(-50%);
+   }
+ }
+-@utility eq-bar {
+-  background: var(--eq-bar);
+-  border-radius: 2px 2px 0 0;
+-  transform-origin: bottom;
+-  animation: eq-bounce var(--eq-dur, 1.6s) ease-in-out var(--eq-delay, 0s) infinite;
+-}
+-@utility hero-glow {
+-  background: var(--hero-glow);
+-}
+-@utility track-glow {
+-  background:
+-    radial-gradient(
+-      60% 90% at 12% 0%,
+-      color-mix(in oklab, var(--primary) 20%, transparent),
+-      transparent 70%
+-    ),
+-    radial-gradient(
+-      45% 70% at 100% 15%,
+-      color-mix(in oklab, var(--primary) 9%, transparent),
+-      transparent 72%
+-    ),
+-    var(--card);
+-}
+-@utility rise-in {
+-  animation: rise-in 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) var(--rise-delay, 0s) both;
+-}
+-@utility text-shimmer {
+-  background: var(--gradient-brand);
+-  background-size: 200% auto;
+-  -webkit-background-clip: text;
+-  background-clip: text;
+-  color: transparent;
+-  animation: shimmer 6s linear infinite;
++@utility marquee-track {
++  display: flex;
++  width: max-content;
++  animation: marquee 40s linear infinite;
+ }
++
+ /* Custom range slider used by the track preview player. */
+ .range-brand {
+   -webkit-appearance: none;
+   appearance: none;
+   height: 6px;
+-  border-radius: 9999px;
+-  background: linear-gradient(
+-    to right,
+-    var(--primary) var(--range-progress, 0%),
+-    color-mix(in oklab, var(--foreground) 18%, transparent) var(--range-progress, 0%)
+-  );
++  border-radius: var(--radius);
++  background: color-mix(in oklab, var(--foreground) 18%, transparent);
+   outline: none;
+ }
+ .range-brand::-webkit-slider-thumb {
+   -webkit-appearance: none;
+   appearance: none;
+-  height: 14px;
+-  width: 14px;
+-  border-radius: 9999px;
++  height: 20px;
++  width: 20px;
++  border-radius: var(--radius);
+   background: var(--primary);
+-  border: 2px solid var(--background);
+-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 25%, transparent);
+   cursor: pointer;
+-  transition: transform 0.15s ease;
++  transition: transform 0.12s ease;
+ }
+ .range-brand::-webkit-slider-thumb:hover {
+-  transform: scale(1.12);
++  transform: scale(1.1);
+ }
+ .range-brand::-moz-range-thumb {
+-  height: 14px;
+-  width: 14px;
+-  border-radius: 9999px;
++  height: 20px;
++  width: 20px;
++  border-radius: var(--radius);
+   background: var(--primary);
+-  border: 2px solid var(--background);
++  border: none;
+   cursor: pointer;
+ }
+-.range-brand:focus-visible {
+-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 30%, transparent);
+-}
+-
+-::selection {
+-  background: color-mix(in oklab, var(--primary) 35%, transparent);
+-  color: var(--foreground);
+-}
+ 
+ @media (prefers-reduced-motion: reduce) {
++  html {
++    scroll-behavior: auto;
++  }
+   .eq-bar,
+   .rise-in,
+-  .text-shimmer {
++  .marquee-track {
+     animation: none;
+   }
++  .range-brand::-webkit-slider-thumb:hover {
++    transform: none;
++  }
+ }

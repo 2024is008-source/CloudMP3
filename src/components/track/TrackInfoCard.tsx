@@ -155,7 +155,7 @@ export function TrackInfoCard({
           {track.tags.slice(0, 8).map((tag) => (
             <span
               key={tag}
-              className="rounded-full border border-border bg-secondary/50 px-2.5 py-1 text-[11px] text-muted-foreground"
+              className="rounded-full border border-border bg-secondary/50 px-2.5 py-1 text-xs text-muted-foreground"
             >
               {tag}
             </span>
@@ -163,7 +163,7 @@ export function TrackInfoCard({
         </div>
       )}
 
-      <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">
+      <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
         Permissions reflect SoundCloud's public track policy. Downloads are only offered when the
         stream is authorized. The original upload is listed only when SoundCloud exposes an
         authorized artist file; encoded streams are not labelled as originals.

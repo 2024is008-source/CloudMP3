@@ -8,8 +8,8 @@ const FOOTER_LINK = "text-muted-foreground transition-colors hover:text-foregrou
 
 export function Footer() {
   return (
-    <footer className="mt-20 border-t border-border/60 bg-card/40">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:grid-cols-2 lg:grid-cols-4">
+    <footer className="mt-section border-t border-border/60 bg-card/40">
+      <div className="mx-auto grid max-w-page gap-10 px-5 py-14 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <div className="flex items-center gap-2.5">
             <BrandMark />
@@ -97,11 +97,11 @@ export function Footer() {
       </div>
 
       <div className="border-t border-border/60">
-        <div className="mx-auto max-w-6xl px-4 py-6 text-xs leading-relaxed text-muted-foreground">
+        <div className="mx-auto max-w-page px-5 py-6 text-xs leading-relaxed text-muted-foreground">
           <p>
             © {new Date().getFullYear()} {SITE.name}. All rights reserved.
           </p>
-          <p className="mt-2">
+          <p className="mt-2 max-w-3xl">
             Disclaimer: {SITE.name} ({SITE.domain}) is not affiliated with, endorsed by, or
             associated with SoundCloud Limited. All trademarks, service marks, and logos belong to
             their respective owners.

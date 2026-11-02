@@ -117,17 +117,17 @@ describe("download options", () => {
     }
   });
 
-  it("labels browser and FFmpeg WAV conversions distinctly", () => {
+  it("offers one plain WAV entry whose pipeline depends on FFmpeg availability", () => {
     const ffmpeg = buildDownloadOptions(makeTrack(), makeFormats(unavailable, true));
     const browser = buildDownloadOptions(makeTrack(), makeFormats(unavailable, false));
 
     const ffmpegWav = ffmpeg.filter((option) => option.kind === "wav-ffmpeg");
     expect(ffmpegWav).toHaveLength(1);
-    expect(ffmpegWav[0]!.label).toBe("Converted WAV");
+    expect(ffmpegWav[0]!.label).toBe("WAV");
 
     const browserWav = browser.filter((option) => option.kind === "wav-browser");
     expect(browserWav).toHaveLength(1);
-    expect(browserWav[0]!.label).toBe("Converted WAV");
+    expect(browserWav[0]!.label).toBe("WAV");
 
     expect(ffmpeg.filter((option) => option.ext === "wav")).toHaveLength(1);
     expect(browser.filter((option) => option.ext === "wav")).toHaveLength(1);

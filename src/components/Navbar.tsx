@@ -22,7 +22,7 @@ export function BrandMark({ className }: { className?: string }) {
 }
 
 const LINK_CLASS =
-  "rounded-full px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
+  "whitespace-nowrap rounded-full px-2.5 py-2 text-nav text-muted-foreground transition-colors hover:bg-accent hover:text-foreground lg:px-3";
 const ACTIVE_CLASS = "bg-secondary text-foreground";
 const ICON_BTN =
   "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border text-foreground";
@@ -54,7 +54,7 @@ export function Navbar() {
           : "border-b border-transparent bg-transparent",
       )}
     >
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
+      <div className="mx-auto flex h-16 max-w-page items-center justify-between gap-4 px-5">
         <Link
           to="/"
           search={{ focus: false }}
@@ -65,17 +65,18 @@ export function Navbar() {
           <span
             className={cn(
               "font-display text-lg font-bold tracking-tight text-foreground",
-              searchOpen && "max-md:hidden",
+              searchOpen && "max-lg:hidden",
             )}
           >
             {SITE.name}
           </span>
         </Link>
 
-        {/* Mobile shows a lookup button until tapped; desktop has its own nav slot. */}
+        {/* Below lg the bar has no room for a field beside four labels, so it offers
+            a lookup button that expands in place instead. */}
         <div
           className={cn(
-            "flex items-center gap-2 md:hidden",
+            "flex items-center gap-2 lg:hidden",
             searchOpen ? "min-w-0 flex-1" : "ml-auto",
           )}
         >
@@ -128,7 +129,7 @@ export function Navbar() {
           <Link to="/contact" className={LINK_CLASS} activeProps={{ className: ACTIVE_CLASS }}>
             Contact / Report
           </Link>
-          <div className="ml-2">
+          <div className="ml-2 hidden lg:block">
             <HeaderSearch />
           </div>
         </nav>
@@ -138,14 +139,14 @@ export function Navbar() {
           aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
-          className={cn(ICON_BTN, "md:hidden", searchOpen && "max-md:hidden")}
+          className={cn(ICON_BTN, "lg:hidden", searchOpen && "max-lg:hidden")}
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
 
       {open && (
-        <nav className="border-t border-border/60 bg-background px-4 pb-5 pt-1 shadow-2xl md:hidden">
+        <nav className="border-t border-border/60 bg-background px-5 pb-5 pt-1 shadow-2xl md:hidden">
           <div className="flex flex-col gap-1 pt-2">
             <Link
               to="/"

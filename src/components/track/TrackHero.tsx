@@ -65,19 +65,19 @@ export function TrackHero({ track }: { track: TrackDetails }) {
 
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
+            <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-foreground">
               {CATEGORY_LABELS[track.category]}
             </span>
             {track.official && (
               <span
                 title="Official release metadata provided by SoundCloud"
-                className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary/60 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+                className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary/60 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
               >
                 <ShieldCheck className="h-3 w-3 text-primary" aria-hidden /> Official release
               </span>
             )}
             {track.snippet && (
-              <span className="rounded-full border border-border bg-secondary/60 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <span className="rounded-full border border-border bg-secondary/60 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 30s preview
               </span>
             )}

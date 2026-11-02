@@ -332,9 +332,9 @@ export function DownloadPanel({
         </div>
         <span
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider",
+            "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold uppercase tracking-wider",
             allowed
-              ? "border-primary/30 bg-primary/10 text-primary"
+              ? "border-primary/30 bg-primary/10 text-foreground"
               : "border-border bg-secondary/50 text-muted-foreground",
           )}
         >

@@ -133,7 +133,7 @@ export function PreviewPlayer({ track }: { track: TrackDetails }) {
           <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden /> Preview
         </p>
         {track.snippet && (
-          <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-primary">
+          <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-foreground">
             Official 30-second preview
           </span>
         )}

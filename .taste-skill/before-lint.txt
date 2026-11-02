@@ -1,0 +1,89 @@
+TASTESKILL · LINT   102 file(s)
+
+FAIL
+  [gradient] Gradient fill. Use a flat colour or a real image (a neutral scrim over a photo is the one exception).  (10×)
+      src/components/Equalizer.tsx:13  linear-gradient(
+      src/components/track/TrackHero.tsx:42  bg-gradient-
+      src/components/ui/navigation-menu.tsx:66  from-right-52
+      src/styles.css:95  radial-gradient(
+      src/styles.css:167  linear-gradient(
+      src/styles.css:172  radial-gradient(
+      … 4 more
+  [hairline] Thin rule / divider line. Separate with space, tone or scale; lines belong to real tables and form fields.  (39×)
+      src/components/Footer.tsx:11  border-t
+      src/components/Footer.tsx:99  border-t
+      src/components/HeaderSearch.tsx:145  border-b
+      src/components/HeaderSearch.tsx:163  border-b
+      src/components/HeaderSearch.tsx:176  border-t
+      src/components/Navbar.tsx:53  border-b
+      … 33 more
+  [shadow] Shadow. Elements at rest carry none; only real overlays (menu, dialog, sticky bar) may.  (59×)
+      src/components/HeaderSearch.tsx:144  shadow-2xl
+      src/components/Navbar.tsx:148  shadow-2xl
+      src/components/SearchTabs.tsx:36  shadow-sm
+      src/components/track/DownloadPanel.tsx:320  shadow-xl
+      src/components/track/DownloadPanel.tsx:431  shadow-lg
+      src/components/track/PreviewPlayer.tsx:130  shadow-xl
+      … 53 more
+  [micro-label] Tiny uppercase letter-spaced label.  (4×)
+      src/components/Page.tsx:40  text-xs uppercase tracking-wider text-muted-foreground
+      src/routes/index.tsx:710  rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase t
+      src/routes/index.tsx:891  flex items-center gap-3 border-b border-border bg-muted/60 px-4 py-2 t
+      src/routes/index.tsx:985  flex items-center gap-2 border-b border-border bg-muted/60 px-4 py-2 t
+  [mono] Monospace type. Only literal code may be monospace.  (2×)
+      src/components/track/TrackInfoCard.tsx:144  font-mono
+      src/components/ui/chart.tsx:224  font-mono
+  [gradient-text] Gradient / clipped text. Use solid colour.  (2×)
+      src/styles.css:234  background-clip: text
+      src/styles.css:235  background-clip: text
+
+WARN
+  [bounce] Looping attention animation (bounce / ping / pulse dot).  (8×)
+      src/components/Footer.tsx:21  animate-ping
+      src/components/SearchResultRow.tsx:131  animate-pulse
+      src/components/SearchResultRow.tsx:133  animate-pulse
+      src/components/SearchResultRow.tsx:134  animate-pulse
+      src/components/SearchResultRow.tsx:136  animate-pulse
+      src/components/track/DownloadPanel.tsx:501  animate-pulse
+      … 2 more
+  [transition-all] transition: all. Name the properties (transform, opacity).  (9×)
+      src/components/HeaderSearch.tsx:124  transition-all
+      src/components/ui/accordion.tsx:25  transition-all
+      src/components/ui/input-otp.tsx:46  transition-all
+      src/components/ui/progress.tsx:18  transition-all
+      src/components/ui/sidebar.tsx:299  transition-all
+      src/components/ui/tabs.tsx:30  transition-all
+      … 3 more
+  [glass] Backdrop blur. One sticky bar at most; glass cards are a tell.  (8×)
+      src/components/Navbar.tsx:53  backdrop-blur
+      src/components/track/DownloadPanel.tsx:320  backdrop-blur
+      src/components/track/PreviewPlayer.tsx:130  backdrop-blur
+      src/components/track/TrackInfoCard.tsx:127  backdrop-blur
+      src/routes/index.tsx:485  backdrop-blur
+      src/routes/index.tsx:692  backdrop-blur
+      … 2 more
+  [outlined-box] A 1px outlined box. Prefer a filled surface or no box.  (5×)
+      src/components/ui/alert-dialog.tsx:37  border
+      src/components/ui/calendar.tsx:168  border
+      src/components/ui/dialog.tsx:41  border
+      src/components/ui/input-otp.tsx:46  border
+      src/lib/error-page.ts:14  border: 1px solid
+  [h-screen] 100vh jumps on mobile. Use 100svh / 100dvh.  (4×)
+      src/lib/error-page.ts:9  height: 100vh
+      src/routes/__root.tsx:22  h-screen
+      src/routes/__root.tsx:48  h-screen
+      src/routes/__root.tsx:149  h-screen
+  [numbering] Zero-padding in script. Fine for a clock, a date or a price; if it builds 01 / 02 / 03 labels, remove it.  (4×)
+      src/lib/search-rank.ts:319  padStart(2, "0")
+      src/routes/how-to-download.tsx:93  padStart(2, "0")
+      src/routes/index.tsx:194  padStart(2, "0")
+      src/routes/index.tsx:372  padStart(2, "0")
+  [default-font] A default typeface. Use the faces named by the drawn direction.  (3×)
+      src/routes/__root.tsx:95  family=Inter
+      src/styles.css:112  font-family: "Inter
+      src/styles.css:118  font-family: "Space Grotesk
+  [em-dash] Em-dash habit. Use a full stop or a comma; keep at most one or two on a page.  (1×)
+      (all files):0  46 em dashes
+
+RESULT: 116 FAIL, 42 WARN — fix the FAILs before rendering.
+Interface fragments marked data-ui keep their own borders and shadows. Any other line that must keep a flagged pattern for a real reason can carry the comment taste-skill-ignore.

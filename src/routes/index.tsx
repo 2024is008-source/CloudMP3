@@ -451,7 +451,7 @@ function Index() {
   const profileSets = info?.type === "profile" ? (info.sets ?? []) : [];
 
   return (
-    <main className="relative isolate mx-auto w-full max-w-4xl px-4 pb-12 pt-4 md:pt-6">
+    <main className="relative isolate mx-auto w-full max-w-page px-5 pb-section pt-4 md:pt-8">
       {!info && <Equalizer />}
       {!info ? (
         <section className="mx-auto mt-0 max-w-2xl text-center md:mt-4">
@@ -463,25 +463,22 @@ function Index() {
             <span className="absolute h-20 w-20 rounded-full bg-primary/25 blur-xl" />
             <BrandMark className="relative scale-[1.8] md:scale-[2.2] shadow-2xl shadow-primary/40" />
           </div>
-          <span className="rise-in inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-medium tracking-wide text-primary">
+          <span className="rise-in inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium tracking-wide text-muted-foreground">
             No sign-up · no app · no queue
           </span>
-          <h1
-            className="rise-in mt-4 text-[2.5rem] font-bold leading-[1.05] tracking-tight sm:text-5xl md:text-6xl"
-            style={{ ["--rise-delay" as string]: "0.1s" }}
-          >
+          <h1 className="rise-in mt-4 text-[2.5rem] font-bold leading-[1.05] tracking-tight sm:text-5xl md:text-6xl">
             SoundCloud <span className="text-shimmer">to MP3</span>
           </h1>
           <p
             className="rise-in mt-3 text-muted-foreground"
-            style={{ ["--rise-delay" as string]: "0.2s" }}
+            style={{ ["--rise-delay" as string]: "0.06s" }}
           >
             A free SoundCloud to MP3 converter for tracks, albums and playlists — up to 320kbps, or
             one ZIP.
           </p>
           <form
             onSubmit={submit}
-            style={{ ["--rise-delay" as string]: "0.3s" }}
+            style={{ ["--rise-delay" as string]: "0.12s" }}
             className="rise-in mt-8 flex shadow-2xl shadow-primary/10 backdrop-blur gap-2 rounded-full border border-border bg-card p-2"
           >
             <input
@@ -534,7 +531,7 @@ function Index() {
         <section
           aria-busy="true"
           aria-label="Loading track information"
-          className="mx-auto mt-12 max-w-3xl"
+          className="mt-12"
         >
           <div className="flex flex-col gap-6 rounded-3xl border border-border bg-card p-6 sm:flex-row sm:items-end">
             <Skeleton className="h-44 w-44 rounded-2xl" />
@@ -552,9 +549,9 @@ function Index() {
         </section>
       )}
       {!info ? (
-        <div className="mx-auto mt-24 max-w-3xl space-y-16 text-left">
+        <div className="mt-section space-y-section text-left">
           <section>
-            <h2 className="text-2xl font-bold tracking-tight">
+            <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
               Convert a SoundCloud Link to MP3 in Four Steps
             </h2>
             <ol className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -596,7 +593,7 @@ function Index() {
                 </li>
               ))}
             </ol>
-            <p className="mt-4 text-sm text-muted-foreground">
+            <p className="mt-4 max-w-prose text-sm text-muted-foreground">
               Need iPhone or Android steps? Read the full{" "}
               <Link
                 to="/how-to-download"
@@ -608,7 +605,7 @@ function Index() {
             </p>
           </section>
           <section>
-            <h2 className="text-2xl font-bold tracking-tight">
+            <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
               Why Use {SITE.name}? High-Bitrate Audio &amp; ID3 Tag Preservation
             </h2>
             <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -658,7 +655,7 @@ function Index() {
             </div>
           </section>
           <section>
-            <h2 className="text-2xl font-bold tracking-tight">
+            <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
               Frequently Asked Questions About SoundCloud Audio Extraction
             </h2>
             <Accordion type="single" collapsible className="mt-5 space-y-3">
@@ -677,7 +674,7 @@ function Index() {
                 </AccordionItem>
               ))}
             </Accordion>
-            <p className="mt-5 text-sm text-muted-foreground">
+            <p className="mt-5 max-w-prose text-sm text-muted-foreground">
               More answers on the{" "}
               <Link to="/faq" className="text-primary underline-offset-4 hover:underline">
                 features &amp; FAQ page
@@ -707,7 +704,7 @@ function Index() {
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
+                <span className="rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-foreground">
                   {info.type}
                 </span>
                 <h2 className="mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl">

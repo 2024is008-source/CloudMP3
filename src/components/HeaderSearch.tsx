@@ -102,7 +102,7 @@ export function HeaderSearch({
   }
 
   return (
-    <div ref={boxRef} className="relative w-full md:w-64 lg:w-80">
+    <div ref={boxRef} className="relative w-full lg:w-64 xl:w-80">
       <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       <input
         value={query}
@@ -121,7 +121,7 @@ export function HeaderSearch({
         }}
         placeholder="Search artist or song..."
         aria-label="Search SoundCloud"
-        className="w-full rounded-full border border-border bg-secondary/90 py-2.5 pl-9 pr-8 text-base text-foreground outline-none transition-all placeholder:text-muted-foreground hover:bg-secondary focus:border-primary/70 focus:bg-secondary md:py-1.5 md:text-sm"
+        className="w-full rounded-full border border-border bg-secondary/90 py-2.5 pl-9 pr-8 text-base text-foreground outline-none transition-all placeholder:text-muted-foreground hover:bg-secondary focus:border-primary/70 focus:bg-secondary lg:py-2 lg:text-nav"
       />
       {busy ? (
         <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-primary" />
