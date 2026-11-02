@@ -16,6 +16,12 @@ dist-ssr
 .nitro
 *.local
 
+# Environment files: real values stay on the machine, examples stay tracked.
+.env
+.env.*
+!.env.example
+!.env.production.example
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars

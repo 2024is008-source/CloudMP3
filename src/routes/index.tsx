@@ -308,9 +308,8 @@ function Index() {
 
   async function clickOne(t: Track) {
     if (job) return;
-    (await one(t))
-      ? toast.success(`Saved ${t.title}`)
-      : toast.error(`Couldn't download ${t.title}`);
+    if (await one(t)) toast.success(`Saved ${t.title}`);
+    else toast.error(`Couldn't download ${t.title}`);
   }
 
   /** Wait out a pause / bail on cancel. Returns false when cancelled. */
@@ -464,7 +463,7 @@ function Index() {
             <span className="absolute h-20 w-20 rounded-full bg-primary/25 blur-xl" />
             <BrandMark className="relative scale-[1.8] md:scale-[2.2] shadow-2xl shadow-primary/40" />
           </div>
-          <span className="rise-in inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground">
+          <span className="rise-in inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-medium tracking-wide text-primary">
             No sign-up · no app · no queue
           </span>
           <h1

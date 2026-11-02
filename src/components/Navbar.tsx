@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Menu, X } from "lucide-react";
+import { Menu, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { HeaderSearch } from "@/components/HeaderSearch";
@@ -24,11 +24,17 @@ export function BrandMark({ className }: { className?: string }) {
 const LINK_CLASS =
   "rounded-full px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
 const ACTIVE_CLASS = "bg-secondary text-foreground";
+const ICON_BTN =
+  "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border text-foreground";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const close = () => setOpen(false);
+  const close = () => {
+    setOpen(false);
+    setSearchOpen(false);
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -37,7 +43,7 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const solid = scrolled || open;
+  const solid = scrolled || open || searchOpen;
 
   return (
     <header
@@ -52,20 +58,68 @@ export function Navbar() {
         <Link
           to="/"
           search={{ focus: false }}
-          className="flex items-center gap-2.5"
+          className="flex shrink-0 items-center gap-2.5"
           onClick={close}
         >
           <BrandMark />
-          <span className="font-display text-lg font-bold tracking-tight text-foreground">
+          <span
+            className={cn(
+              "font-display text-lg font-bold tracking-tight text-foreground",
+              searchOpen && "max-md:hidden",
+            )}
+          >
             {SITE.name}
           </span>
         </Link>
 
+        {/* Mobile shows a lookup button until tapped; desktop has its own nav slot. */}
+        <div
+          className={cn(
+            "flex items-center gap-2 md:hidden",
+            searchOpen ? "min-w-0 flex-1" : "ml-auto",
+          )}
+        >
+          {searchOpen ? (
+            <>
+              <div className="min-w-0 flex-1">
+                <HeaderSearch onPicked={() => setSearchOpen(false)} autoFocus />
+              </div>
+              <button
+                type="button"
+                aria-label="Close search"
+                onClick={() => setSearchOpen(false)}
+                className={ICON_BTN}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              aria-label="Search SoundCloud"
+              onClick={() => setSearchOpen(true)}
+              className={ICON_BTN}
+            >
+              <Search className="h-5 w-5" />
+            </button>
+          )}
+        </div>
+
         <nav className="hidden items-center gap-1 md:flex">
-          <Link to="/" search={{ focus: false }} className={LINK_CLASS} activeOptions={{ exact: true }} activeProps={{ className: ACTIVE_CLASS }}>
+          <Link
+            to="/"
+            search={{ focus: false }}
+            className={LINK_CLASS}
+            activeOptions={{ exact: true }}
+            activeProps={{ className: ACTIVE_CLASS }}
+          >
             Home
           </Link>
-          <Link to="/how-to-download" className={LINK_CLASS} activeProps={{ className: ACTIVE_CLASS }}>
+          <Link
+            to="/how-to-download"
+            className={LINK_CLASS}
+            activeProps={{ className: ACTIVE_CLASS }}
+          >
             How to Download
           </Link>
           <Link to="/faq" className={LINK_CLASS} activeProps={{ className: ACTIVE_CLASS }}>
@@ -84,7 +138,7 @@ export function Navbar() {
           aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border text-foreground md:hidden"
+          className={cn(ICON_BTN, "md:hidden", searchOpen && "max-md:hidden")}
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
@@ -93,21 +147,35 @@ export function Navbar() {
       {open && (
         <nav className="border-t border-border/60 bg-background px-4 pb-5 pt-1 shadow-2xl md:hidden">
           <div className="flex flex-col gap-1 pt-2">
-            <Link to="/" search={{ focus: false }} onClick={close} className="rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">
+            <Link
+              to="/"
+              search={{ focus: false }}
+              onClick={close}
+              className="rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
               Home
             </Link>
-            <Link to="/how-to-download" onClick={close} className="rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">
+            <Link
+              to="/how-to-download"
+              onClick={close}
+              className="rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
               How to Download
             </Link>
-            <Link to="/faq" onClick={close} className="rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">
+            <Link
+              to="/faq"
+              onClick={close}
+              className="rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
               Features &amp; FAQ
             </Link>
-            <Link to="/contact" onClick={close} className="rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">
+            <Link
+              to="/contact"
+              onClick={close}
+              className="rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
               Contact / Report
             </Link>
-            <div className="mt-2" onClick={(e) => e.stopPropagation()}>
-              <HeaderSearch onPicked={close} />
-            </div>
           </div>
         </nav>
       )}

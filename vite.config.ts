@@ -22,12 +22,15 @@ export default defineConfig(({ command, mode }) => {
     viteReact(),
   ];
 
-  if (command === "build") plugins.push(nitro({ defaultPreset: "cloudflare-module" }));
+  // node-server emits a plain Node HTTP server (.output/server/index.mjs) for the VPS;
+  // "cloudflare-module" was the earlier Worker target and cannot run under PM2.
+  if (command === "build") plugins.push(nitro({ defaultPreset: "node-server" }));
 
   // .env values are inlined at build time; SSR-only secrets stay out of the bundle by not being VITE_ prefixed.
   const env = loadEnv(mode, process.cwd(), "VITE_");
   const define: Record<string, string> = {};
-  for (const [key, value] of Object.entries(env)) define[`import.meta.env.${key}`] = JSON.stringify(value);
+  for (const [key, value] of Object.entries(env))
+    define[`import.meta.env.${key}`] = JSON.stringify(value);
 
   const config: UserConfig = {
     define,
@@ -64,7 +67,9 @@ export default defineConfig(({ command, mode }) => {
 
   if (isDevBuild) {
     return mergeConfig(config, {
-      environments: { client: { define: { "process.env.NODE_ENV": JSON.stringify("development") } } },
+      environments: {
+        client: { define: { "process.env.NODE_ENV": JSON.stringify("development") } },
+      },
       esbuild: { keepNames: true },
     });
   }
