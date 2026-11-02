@@ -1,0 +1,14 @@
+services:
+  original-audio:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    volumes:
+      # SoundCloud rotates refresh tokens; this volume keeps the latest one.
+      - cloudmp3-tokens:/data
+
+volumes:
+  cloudmp3-tokens:
