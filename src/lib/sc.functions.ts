@@ -3,14 +3,30 @@ import { z } from "zod";
 
 export const getInfo = createServerFn({ method: "POST" })
   .validator((d: unknown) =>
-    z.object({ url: z.string().url().refine((u) => /(^|\.)soundcloud\.com$|on\.soundcloud\.com/.test(new URL(u).hostname), "Not a SoundCloud link") }).parse(d),
+    z
+      .object({
+        url: z
+          .string()
+          .url()
+          .refine(
+            (u) => /(^|\.)soundcloud\.com$|on\.soundcloud\.com/.test(new URL(u).hostname),
+            "Not a SoundCloud link",
+          ),
+      })
+      .parse(d),
   )
   .handler(async ({ data }) => {
     const { resolveUrl } = await import("./soundcloud.server");
+    // Whether this deployment can run FFmpeg at all decides where a batch's
+    // conversions happen, so the page is told alongside the tracks.
+    const { serviceConfigured } = await import("./original.server");
     try {
-      return { ok: true as const, info: await resolveUrl(data.url) };
+      return { ok: true as const, info: await resolveUrl(data.url), service: serviceConfigured() };
     } catch (e) {
-      return { ok: false as const, error: e instanceof Error ? e.message : "Could not resolve link" };
+      return {
+        ok: false as const,
+        error: e instanceof Error ? e.message : "Could not resolve link",
+      };
     }
   });
 

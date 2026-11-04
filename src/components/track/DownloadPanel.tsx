@@ -124,6 +124,8 @@ export function DownloadPanel({
               : "wav",
       estimatedBytes: estimateBytes(track.duration, fmt.kbps ?? 0),
       bitrate: fmt.kbps,
+      durationMs: track.duration,
+      serviceAvailable: formats?.configured === true,
     });
     const controller = new AbortController();
     abortRef.current?.abort();

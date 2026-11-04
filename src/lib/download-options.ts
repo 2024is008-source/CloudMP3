@@ -64,10 +64,11 @@ function streamOption(stream: StreamInfo): DownloadOption {
 }
 
 /**
- * Whether only the audio service can produce this file.
+ * Whether this deployment has no way to make the file.
  *
  * The question is asked the way the download itself asks it, so a tile cannot
- * promise a format the deployment has no way to make.
+ * promise a format the deployment has no way to produce: with no audio service
+ * the tab is the producer, and it is asked only for what it can hold.
  */
 function needsService(option: DownloadOption, durationMs: number): boolean {
   return (
@@ -75,6 +76,8 @@ function needsService(option: DownloadOption, durationMs: number): boolean {
       format: option.kind,
       estimatedBytes: estimateBytes(durationMs, option.kbps ?? 0),
       bitrate: option.kbps,
+      durationMs,
+      serviceAvailable: false,
     }) === "server"
   );
 }
@@ -82,8 +85,8 @@ function needsService(option: DownloadOption, durationMs: number): boolean {
 /**
  * Only formats that actually exist become options. The "Original" entry comes
  * from the service's confirmed download format, never from the title or a
- * WAV-extension transcoding, and a format that is the service's job appears only
- * while the service is configured — the alternative is a tile that fails.
+ * WAV-extension transcoding, and a format nobody on this deployment can produce
+ * is left out — the alternative is a tile that fails.
  * AAC is not a format the panel offers: it is what SoundCloud streams, not what
  * a visitor came here to collect.
  */

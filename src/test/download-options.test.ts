@@ -193,27 +193,43 @@ describe("download options", () => {
     });
   });
 
-  it("drops the formats only the audio service could produce", () => {
+  it("hands the conversions to the tab when there is no audio service", () => {
     const options = buildDownloadOptions(makeTrack(), offlineFormats());
 
-    // 200 s at 192 kbps is 4.8 MB, so the tab can encode that one; 256, 320 and
-    // WAV are FFmpeg's, and a tile for them would only fail.
-    expect(options.map((option) => option.label)).toEqual(["MP3 192 kbps"]);
+    // 200 s is a length the tab can hold whole, so MP3 at every bitrate and WAV
+    // are still producible here — just not by FFmpeg. Only Original needs the
+    // service, and that entry is gone rather than guessed at.
+    expect(options.map((option) => option.label)).toEqual([
+      "MP3 320 kbps",
+      "MP3 256 kbps",
+      "MP3 192 kbps",
+      "WAV",
+    ]);
+  });
+
+  it("stops offering conversions past the length a tab can hold", () => {
+    const at = buildDownloadOptions(makeTrack({ duration: 300_000 }), offlineFormats());
+    const past = buildDownloadOptions(makeTrack({ duration: 300_001 }), offlineFormats());
+
+    expect(at.map((option) => option.kind)).toEqual(["mp3", "mp3", "mp3", "wav"]);
+    expect(past.map((option) => option.kind)).toEqual(["stream"]);
   });
 
   it("falls back to the stream when nothing else can be made without the service", () => {
     const options = buildDownloadOptions(makeTrack({ duration: 400_000 }), offlineFormats());
 
-    // 400 s passes the tab's size ceiling at every bitrate, so the only file
-    // this deployment can hand over is what SoundCloud already serves.
+    // 400 s is more decoded audio than a tab should be handed, and there is no
+    // FFmpeg here to take it instead, so the only file this deployment can give
+    // is what SoundCloud already serves.
     expect(options.map((option) => option.label)).toEqual(["AAC 160 kbps"]);
   });
 
-  it("keeps every format once the service is configured", () => {
-    const offline = buildDownloadOptions(makeTrack(), offlineFormats()).map((o) => o.value);
-    const online = buildDownloadOptions(makeTrack(), makeFormats(unavailable)).map((o) => o.value);
+  it("adds the long conversions back once the audio service is configured", () => {
+    const long = makeTrack({ duration: 400_000 });
+    const offline = buildDownloadOptions(long, offlineFormats()).map((o) => o.value);
+    const online = buildDownloadOptions(long, makeFormats(unavailable)).map((o) => o.value);
 
-    expect(online.length).toBeGreaterThan(offline.length);
+    expect(offline).toEqual(["stream-high"]);
     expect(online).toContain("mp3-256");
     expect(online).toContain("wav");
   });

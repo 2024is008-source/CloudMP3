@@ -29,8 +29,8 @@ export type Picked = {
 };
 
 /** Where one homepage file is produced, from the same table as the track page. */
-export function routeForTrack(track: HomeTrack, quality: Format): DownloadRoute {
-  return routeForChoice(quality, track.duration);
+export function routeForTrack(track: HomeTrack, quality: Format, serviceAvailable = true) {
+  return routeForChoice(quality, track.duration, serviceAvailable);
 }
 
 /**
@@ -105,8 +105,9 @@ export async function downloadTrackFile(
   quality: Format,
   meta: { album?: string | undefined; number?: number | undefined },
   signal: AbortSignal,
+  serviceAvailable = true,
 ): Promise<{ route: DownloadRoute; file: Picked }> {
-  const route = routeForTrack(track, quality);
+  const route = routeForTrack(track, quality, serviceAvailable);
   const file =
     route === "server"
       ? await fetchFromServer(track, quality, signal)

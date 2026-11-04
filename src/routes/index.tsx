@@ -251,6 +251,9 @@ function Index() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<Info | null>(null);
+  // Whether this deployment runs FFmpeg. Without it the tab converts what it can
+  // hold, which is the same rule the track panel builds its list from.
+  const [service, setService] = useState(true);
   const [state, setState] = useState<Record<number, "busy" | "done" | "err">>({});
   const [job, setJob] = useState<Job | null>(null);
   const [quality, setQuality] = useState<Format>("mp3-320");
@@ -313,6 +316,7 @@ function Index() {
           return;
         }
         setInfo(r.info as Info);
+        setService(r.service);
         setState({});
         setSelected(new Set());
         setTrackQuery("");
@@ -360,7 +364,7 @@ function Index() {
       // The route is the shared policy's, decided once, with no second guess
       // when the service is unreachable: a server-only format fails plainly
       // rather than becoming a different file in the tab.
-      const { file } = await downloadTrackFile(t, quality, { album, number }, signal);
+      const { file } = await downloadTrackFile(t, quality, { album, number }, signal, service);
       const name = file.filename
         ? safe(file.filename)
         : `${safe(`${t.artist} - ${t.title}`)}.${file.ext}`;
@@ -393,6 +397,7 @@ function Index() {
     return routeForJob(
       quality,
       tracks.map((t) => t.duration),
+      service,
     );
   }
 

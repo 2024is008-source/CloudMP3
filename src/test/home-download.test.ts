@@ -50,9 +50,13 @@ beforeEach(() => {
   );
 });
 
-async function run(quality: Format, overrides: Partial<typeof track> = {}) {
+async function run(
+  quality: Format,
+  overrides: Partial<typeof track> = {},
+  serviceAvailable = true,
+) {
   const signal = new AbortController().signal;
-  return downloadTrackFile({ ...track, ...overrides }, quality, {}, signal);
+  return downloadTrackFile({ ...track, ...overrides }, quality, {}, signal, serviceAvailable);
 }
 
 describe("one homepage download", () => {
@@ -137,5 +141,36 @@ describe("a homepage download with the conversion service down", () => {
     const result = await run("original-high");
     expect(result.route).toBe("direct");
     expect(result.file.method).toBe("direct");
+  });
+});
+
+describe("a homepage download on a deployment with no audio service", () => {
+  // Nothing is configured to run FFmpeg here, so the tab is the producer and the
+  // file the visitor asked for is still the file they get — same format, tab-made.
+  beforeEach(() => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        urls.push(input);
+        return ok(new Uint8Array([1, 2, 3]), { "X-File-Ext": "m4a" });
+      }),
+    );
+  });
+
+  it("converts a wav in the tab instead of asking a service that is not there", async () => {
+    const result = await run("wav", {}, false);
+    expect(result.route).toBe("browser");
+    expect(result.file.method).toBe("browser");
+    expect(urls.every((u) => !u.includes("mode="))).toBe(true);
+    expect(convert).toHaveBeenCalled();
+  });
+
+  it("converts a 320 kbps mp3 in the tab", async () => {
+    expect((await run("mp3-320", {}, false)).route).toBe("browser");
+  });
+
+  it("refuses a track longer than the tab can hold", async () => {
+    expect(routeForTrack({ ...track, duration: LONG }, "mp3-320", false)).toBe("server");
+    expect(routeForTrack(track, "mp3-320", false)).toBe("browser");
   });
 });

@@ -67,23 +67,57 @@ describe("download routing table", () => {
   });
 });
 
-describe("routing when the conversion service is unreachable", () => {
-  // A mandatory server format is never moved into the tab: the tab would decode
-  // and re-encode a WAV or a 320kbps MP3 the visitor did not ask for. The route
-  // is the same answer whether or not the service is configured, so the request
-  // goes to the proxy and fails with its own clear sentence.
-  it("keeps every mandatory server format on the backend", () => {
-    expect(route({ format: "wav", estimatedBytes: 5_000_000 })).toBe("server");
-    expect(route({ format: "mp3", bitrate: 320 })).toBe("server");
-    expect(route({ format: "mp3", bitrate: 256 })).toBe("server");
-    expect(route({ format: "mp3", bitrate: 128, estimatedBytes: 8_000_000 })).toBe("server");
-    expect(route({ format: "mp3", bitrate: 128, isZip: true })).toBe("server");
+describe("routing when the deployment has no audio service", () => {
+  // With no FFmpeg here the tab is the only producer, so it takes the conversion
+  // for a track it can hold whole and refuses one it cannot. The format never
+  // changes: a 320 asked for is a 320 made, just in the tab.
+  const NO_SERVICE = { serviceAvailable: false };
+
+  it("converts every format in the tab within the length it can hold", () => {
+    expect(route({ format: "wav", durationMs: SHORT, ...NO_SERVICE })).toBe("browser");
+    expect(route({ format: "mp3", bitrate: 320, durationMs: SHORT, ...NO_SERVICE })).toBe(
+      "browser",
+    );
+    expect(route({ format: "mp3", bitrate: 256, durationMs: SHORT, ...NO_SERVICE })).toBe(
+      "browser",
+    );
+    expect(route({ format: "mp3", bitrate: 128, durationMs: SHORT, ...NO_SERVICE })).toBe(
+      "browser",
+    );
+  });
+
+  it("leaves a track longer than the tab can hold with nobody", () => {
+    expect(route({ format: "wav", durationMs: LONG, ...NO_SERVICE })).toBe("server");
+    expect(route({ format: "mp3", bitrate: 128, durationMs: LONG, ...NO_SERVICE })).toBe("server");
+    expect(
+      route({
+        format: "mp3",
+        bitrate: 128,
+        estimatedBytes: 100_000,
+        durationMs: LONG,
+        ...NO_SERVICE,
+      }),
+    ).toBe("server");
   });
 
   it("still hands over what needs no conversion", () => {
-    expect(route({ format: "aac" })).toBe("direct");
-    expect(route({ format: "original" })).toBe("direct");
-    expect(route({ format: "mp3", bitrate: 128, estimatedBytes: 100_000 })).toBe("browser");
+    expect(route({ format: "aac", ...NO_SERVICE })).toBe("direct");
+    expect(route({ format: "original", ...NO_SERVICE })).toBe("direct");
+    expect(route({ format: "stream", ...NO_SERVICE })).toBe("direct");
+  });
+
+  it("keeps a zip on the backend, where the archive is packed", () => {
+    expect(
+      route({ format: "mp3", bitrate: 128, isZip: true, durationMs: SHORT, ...NO_SERVICE }),
+    ).toBe("server");
+  });
+
+  it("changes nothing while the service is configured", () => {
+    expect(route({ format: "wav", durationMs: SHORT })).toBe("server");
+    expect(route({ format: "mp3", bitrate: 320, durationMs: SHORT })).toBe("server");
+    expect(
+      route({ format: "mp3", bitrate: 192, estimatedBytes: 1_000_000, durationMs: SHORT }),
+    ).toBe("browser");
   });
 });
 
@@ -106,6 +140,13 @@ describe("the quality picker's value", () => {
     expect(routeForChoice("mp3-128", LONG)).toBe("server");
     expect(routeForChoice("mp3-192", 500_000)).toBe("server");
   });
+
+  it("moves every conversion to the tab when there is no service to run it", () => {
+    expect(routeForChoice("wav", SHORT, false)).toBe("browser");
+    expect(routeForChoice("mp3-320", SHORT, false)).toBe("browser");
+    expect(routeForChoice("mp3-320", LONG, false)).toBe("server");
+    expect(routeForChoice("original-high", LONG, false)).toBe("direct");
+  });
 });
 
 describe("a homepage batch's job-level route", () => {
@@ -120,9 +161,17 @@ describe("a homepage batch's job-level route", () => {
     expect(routeForJob("original-high", [SHORT, LONG])).toBe("direct");
   });
 
+  it("reports the tab for a whole batch the tab can finish", () => {
+    expect(routeForJob("mp3-320", [SHORT, SHORT], false)).toBe("browser");
+    expect(routeForJob("wav", [SHORT, LONG], false)).toBe("server");
+  });
+
   it("reports a single track exactly as that track's own route", () => {
     for (const duration of [SHORT, LONG]) {
       expect(routeForJob("mp3-192", [duration])).toBe(routeForChoice("mp3-192", duration));
+      expect(routeForJob("mp3-192", [duration], false)).toBe(
+        routeForChoice("mp3-192", duration, false),
+      );
     }
   });
 });
