@@ -62,6 +62,23 @@ function makeFormats(original: OriginalInfo, wav = true): TrackFormats {
   };
 }
 
+/** The state a deployment without the audio service reports. */
+function offlineFormats(): TrackFormats {
+  return {
+    configured: false,
+    trackId: 123,
+    original: {
+      available: false,
+      reason: "service-unconfigured",
+      message: "Original-file access isn't configured on this deployment.",
+    },
+    streams: [],
+    wavConversion: { available: false, source: null },
+    mp3Conversion: { available: false, bitrates: [], source: null },
+    account: { configured: false },
+  };
+}
+
 const unavailable: OriginalInfo = {
   available: false,
   reason: "not-enabled",
@@ -142,11 +159,63 @@ describe("download options", () => {
     ]);
   });
 
-  it("offers only the best real stream", () => {
+  it("does not offer the AAC stream as a format", () => {
     const options = buildDownloadOptions(makeTrack(), makeFormats(unavailable));
-    const streams = options.filter((option) => option.kind === "stream");
-    expect(streams.map((option) => option.value)).toEqual(["stream-high"]);
-    expect(streams[0]!.label).toBe("AAC 160 kbps");
+    expect(options.some((option) => option.kind === "stream")).toBe(false);
+    expect(options.some((option) => option.ext === "m4a")).toBe(false);
+    expect(options.map((option) => option.label)).toEqual([
+      "MP3 320 kbps",
+      "MP3 256 kbps",
+      "MP3 192 kbps",
+      "WAV",
+    ]);
+  });
+
+  it("offers a stream as it is when it already is an MP3", () => {
+    const options = buildDownloadOptions(
+      makeTrack({
+        variants: [
+          {
+            preset: "mp3_0_0",
+            codec: "MP3",
+            bitrate: 128,
+            protocol: "progressive",
+            mime: "audio/mpeg",
+          },
+        ],
+      }),
+      offlineFormats(),
+    );
+    expect(options.find((option) => option.kind === "stream")).toMatchObject({
+      value: "stream-high",
+      label: "MP3 128 kbps",
+      ext: "mp3",
+    });
+  });
+
+  it("drops the formats only the audio service could produce", () => {
+    const options = buildDownloadOptions(makeTrack(), offlineFormats());
+
+    // 200 s at 192 kbps is 4.8 MB, so the tab can encode that one; 256, 320 and
+    // WAV are FFmpeg's, and a tile for them would only fail.
+    expect(options.map((option) => option.label)).toEqual(["MP3 192 kbps"]);
+  });
+
+  it("falls back to the stream when nothing else can be made without the service", () => {
+    const options = buildDownloadOptions(makeTrack({ duration: 400_000 }), offlineFormats());
+
+    // 400 s passes the tab's size ceiling at every bitrate, so the only file
+    // this deployment can hand over is what SoundCloud already serves.
+    expect(options.map((option) => option.label)).toEqual(["AAC 160 kbps"]);
+  });
+
+  it("keeps every format once the service is configured", () => {
+    const offline = buildDownloadOptions(makeTrack(), offlineFormats()).map((o) => o.value);
+    const online = buildDownloadOptions(makeTrack(), makeFormats(unavailable)).map((o) => o.value);
+
+    expect(online.length).toBeGreaterThan(offline.length);
+    expect(online).toContain("mp3-256");
+    expect(online).toContain("wav");
   });
 });
 

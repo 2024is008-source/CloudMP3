@@ -335,11 +335,21 @@ const PRESET_BITRATES: Record<string, number> = {
   opus_0_0: 64,
 };
 
+/**
+ * An audio container, not a playlist.
+ *
+ * `abr_sq` reports `audio/mpegurl`, which starts with `audio/mpeg` and so reads
+ * as MP3 to a plain prefix test: the panel then offers "MP3 128 kbps" for what is
+ * an adaptive playlist whose segments are AAC, and the file that arrives is a
+ * .m4a. The word boundary is what separates the two mimes.
+ */
+const AUDIO_MIME = /^audio\/(mp4|mpeg)\b/i;
+
 function playableVariant(tc: any): AudioVariant | null {
   const protocol = tc?.format?.protocol;
   if (protocol !== "hls" && protocol !== "progressive") return null;
   const mime = String(tc?.format?.mime_type ?? "");
-  if (!mime.startsWith("audio/mp4") && !mime.startsWith("audio/mpeg")) return null;
+  if (!AUDIO_MIME.test(mime)) return null;
   const preset = String(tc?.preset ?? "");
   const codec: "AAC" | "MP3" = mime.startsWith("audio/mp4") ? "AAC" : "MP3";
   const digits = Number(preset.match(/(\d{2,3})k?/)?.[1] ?? 0);

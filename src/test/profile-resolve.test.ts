@@ -6,7 +6,7 @@ vi.mock("node:dns/promises", () => ({
   default: { lookup: async () => [{ address: "93.184.215.34", family: 4 }] },
 }));
 
-import { resolveUrl } from "@/lib/soundcloud.server";
+import { getTrackDetails, resolveUrl } from "@/lib/soundcloud.server";
 
 type Stub = {
   ok: boolean;
@@ -145,6 +145,29 @@ describe("resolveUrl", () => {
     expect(r.type).toBe("track");
     expect(r.track_count).toBe(1);
     expect(r.tracks[0]?.artist).toBe("The Peak: EDM");
+  });
+
+  it("reads an adaptive playlist transcoding as no audio format at all", async () => {
+    stubApi({
+      "/tracks/1": {
+        ...track(1, "one", 60_000),
+        media: {
+          transcodings: [
+            {
+              preset: "aac_96k",
+              format: { protocol: "hls", mime_type: 'audio/mp4; codecs="mp4a.40.2"' },
+            },
+            // `audio/mpegurl` starts with `audio/mpeg`, so a prefix test calls this
+            // MP3 and the panel offers a 128 kbps tile whose bytes are AAC.
+            { preset: "abr_sq", format: { protocol: "hls", mime_type: "audio/mpegurl" } },
+          ],
+        },
+      },
+    });
+
+    const t = await getTrackDetails(1);
+    expect(t.variants.map((v) => v.preset)).toEqual(["aac_96k"]);
+    expect(t.source.preset).toBe("aac_96k");
   });
 });
 

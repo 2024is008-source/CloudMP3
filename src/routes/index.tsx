@@ -200,8 +200,6 @@ type Job = {
   /** Only a server ZIP reports bytes; a per-track job counts finished files. */
   received?: number;
   size?: number | null;
-  /** The files job whose work is FFmpeg's, so the panel can say where it runs. */
-  onServer?: boolean;
 };
 
 type OneResult =
@@ -468,7 +466,6 @@ function Index() {
       failed: 0,
       current: null,
       paused: false,
-      onServer: request.method === "server",
     });
     await Promise.all(
       Array.from({ length: 4 }, async () => {
@@ -669,7 +666,7 @@ function Index() {
     job?.kind === "zip"
       ? job.size && job.received
         ? `ZIP ${fmtSize(job.received)} of ${fmtSize(job.size)}`
-        : "ZIP on the server"
+        : "Preparing ZIP"
       : job
         ? `Downloading ${job.done}/${job.total}`
         : "";
@@ -1047,9 +1044,6 @@ function Index() {
                   <span className="min-w-0 max-w-48 truncate text-muted-foreground">
                     Now: {job.current}
                   </span>
-                )}
-                {job.kind === "files" && job.onServer && (
-                  <span className="text-muted-foreground">Converting on the server</span>
                 )}
                 {job.kind === "files" && (
                   <span className="text-muted-foreground">

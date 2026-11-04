@@ -57,14 +57,16 @@ type Job = {
   error?: string;
 };
 
+// One label while the file is being made, one when it is. What the machinery is
+// called, and where it runs, is not something a visitor has to read to wait.
 const PHASE_LABEL: Record<Exclude<Phase, "error">, string> = {
-  downloading: "Downloading audio",
-  converting: "Converting on the server",
-  decoding: "Decoding audio",
-  encoding: "Re-encoding audio",
-  tagging: "Writing ID3 tags",
-  saving: "Handing to your browser",
-  done: "File ready",
+  downloading: "Preparing file",
+  converting: "Preparing file",
+  decoding: "Preparing file",
+  encoding: "Preparing file",
+  tagging: "Preparing file",
+  saving: "Preparing file",
+  done: "Complete",
 };
 
 function optionSize(option: DownloadOption, duration: number): string {
@@ -319,7 +321,6 @@ export function DownloadPanel({
 
   const pct =
     job?.progress === null || job?.progress === undefined ? null : Math.round(job.progress * 100);
-  const downloading = job?.phase === "downloading";
   const finished = job?.phase === "done";
   const failed = job?.phase === "error";
   const originalAvailable = formats?.original.available === true;
@@ -534,24 +535,18 @@ export function DownloadPanel({
                     </div>
                   )}
 
-                  <p
-                    className={cn(
-                      "mt-2 text-xs",
-                      failed ? "text-destructive" : "text-muted-foreground",
-                    )}
-                  >
-                    {failed
-                      ? job.error
-                      : finished
-                        ? `${label} · ${formatBytes(job.received ?? 0)} ready to save.`
-                        : downloading
-                          ? `${formatBytes(job.received ?? 0)}${job.total ? ` of ≈ ${formatBytes(job.total)}` : ""} downloaded`
-                          : job.phase === "converting"
-                            ? `FFmpeg is converting the stream to ${label} on the server — this can take a moment.`
-                            : job.phase === "encoding" && pct !== null
-                              ? `Encoding ${label} · ${pct}%`
-                              : `${label} · working…`}
-                  </p>
+                  {(failed || finished) && (
+                    <p
+                      className={cn(
+                        "mt-2 text-xs",
+                        failed ? "text-destructive" : "text-muted-foreground",
+                      )}
+                    >
+                      {failed
+                        ? job.error
+                        : `${label} · ${formatBytes(job.received ?? 0)} ready to save.`}
+                    </p>
+                  )}
 
                   <div className="mt-3 flex flex-wrap gap-2">
                     {failed && (
