@@ -5,6 +5,7 @@ from formats import (
     OriginalFile,
     StreamFormat,
     TrackFormats,
+    _artwork,
     _is_original_format,
     ext_from_filename,
     ext_from_url,
@@ -137,6 +138,53 @@ def test_public_payload_never_leaks_source_urls() -> None:
     assert public["original"]["ext"] == "wav"
     assert public["streams"][0]["codec"] == "AAC"
     assert public["wavConversion"]["available"] is False
+    assert public["mp3Conversion"]["available"] is False
+    assert public["mp3Conversion"]["bitrates"] == [128, 192, 256, 320]
+
+
+def test_mp3_conversion_offers_every_bitrate_when_ffmpeg_is_present() -> None:
+    bundle = TrackFormats(
+        track_id=8,
+        title="Song",
+        artist="Artist",
+        duration=1000,
+        permalink_url="https://soundcloud.com/artist/song",
+        original=None,
+        original_reason="unavailable",
+        original_message="none",
+        streams=[
+            StreamFormat(
+                preset="http_mp3_128",
+                codec="MP3",
+                ext="mp3",
+                bitrate=128,
+                protocol="progressive",
+                url="https://cf-media.sndcdn.com/a.mp3",
+            )
+        ],
+        ffmpeg_available=True,
+    )
+    public = bundle.to_public()
+
+    assert public["mp3Conversion"]["available"] is True
+    assert public["mp3Conversion"]["source"]["codec"] == "MP3"
+    assert "sndcdn.com" not in repr(public)
+
+
+def test_artwork_prefers_the_largest_soundcloud_thumbnail() -> None:
+    info = {
+        "thumbnails": [
+            {"url": "https://i.sndcdn.com/artworks-000-tiny.jpg"},
+            {"url": "https://i.sndcdn.com/artworks-000-large.jpg"},
+        ]
+    }
+    assert _artwork(info) == "https://i.sndcdn.com/artworks-000-large.jpg"
+
+
+def test_artwork_ignores_foreign_and_missing_thumbnails() -> None:
+    assert _artwork({"thumbnails": [{"url": "https://example.com/a.jpg"}]}) is None
+    assert _artwork({"thumbnail": "https://i.sndcdn.com/only.jpg"}) == "https://i.sndcdn.com/only.jpg"
+    assert _artwork({}) is None
 
 
 def test_original_reason_order() -> None:

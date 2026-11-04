@@ -4,6 +4,7 @@ import { AlertCircle, Loader2, Search, X } from "lucide-react";
 
 import { SearchResultRow, SearchResultSkeleton } from "@/components/SearchResultRow";
 import { SearchTabs } from "@/components/SearchTabs";
+import { trackAppError, trackResultOpened, trackSearch } from "@/lib/analytics";
 import { searchSoundcloud } from "@/lib/sc.functions";
 import { setSelection } from "@/lib/selection";
 import type { SearchResult, SearchTab } from "@/lib/search-rank";
@@ -27,6 +28,8 @@ export function HeaderSearch({
   const [error, setError] = useState<string | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const reqRef = useRef(0);
+  // One box can fail on every typing pause, so a run of failures is reported once.
+  const failureReported = useRef(false);
   const navigate = useNavigate();
 
   // Debounced search; previous results stay visible while the next request runs.
@@ -48,14 +51,24 @@ export function HeaderSearch({
         const r = await searchSoundcloud({ data: { q, tab, limit: QUICK_LIMIT, offset: 0 } });
         if (reqId !== reqRef.current) return;
         if (r.ok) {
+          failureReported.current = false;
           setResults(r.results);
           setError(null);
           setOpen(true);
         } else {
+          if (!failureReported.current) {
+            failureReported.current = true;
+            trackAppError({ stage: "search", error: r.error });
+          }
           setError(r.error);
         }
-      } catch {
-        if (reqId === reqRef.current) setError("Search is unavailable right now. Try again.");
+      } catch (e) {
+        if (reqId !== reqRef.current) return;
+        if (!failureReported.current) {
+          failureReported.current = true;
+          trackAppError({ stage: "search", error: e });
+        }
+        setError("Search is unavailable right now. Try again.");
       } finally {
         if (reqId === reqRef.current) {
           setBusy(false);
@@ -81,6 +94,7 @@ export function HeaderSearch({
     setResults([]);
     setSearched(false);
     onPicked?.();
+    trackResultOpened({ kind: item.kind, from: "header" });
     if (item.kind === "track") {
       void navigate({
         to: "/track/$id",
@@ -98,6 +112,9 @@ export function HeaderSearch({
     if (q.length < MIN_CHARS) return;
     setOpen(false);
     onPicked?.();
+    // Only an explicit submission is counted; the debounced lookup for each
+    // typing pause is a keystroke, not a search the visitor asked for.
+    trackSearch({ source: "header", tab, term: q, resultCount: results.length });
     void navigate({ to: "/search", search: { q, tab } });
   }
 

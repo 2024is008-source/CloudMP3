@@ -23,6 +23,7 @@ import { Route as TrackIdRouteImport } from './routes/track.$id'
 import { Route as ApiPublicFormatsRouteImport } from './routes/api/public/formats'
 import { Route as ApiPublicPreviewRouteImport } from './routes/api/public/preview'
 import { Route as ApiPublicTrackRouteImport } from './routes/api/public/track'
+import { Route as ApiPublicZipRouteImport } from './routes/api/public/zip'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -94,6 +95,11 @@ const ApiPublicTrackRoute = ApiPublicTrackRouteImport.update({
   path: '/api/public/track',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicZipRoute = ApiPublicZipRouteImport.update({
+  id: '/api/public/zip',
+  path: '/api/public/zip',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/api/public/formats': typeof ApiPublicFormatsRoute
   '/api/public/preview': typeof ApiPublicPreviewRoute
   '/api/public/track': typeof ApiPublicTrackRoute
+  '/api/public/zip': typeof ApiPublicZipRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/api/public/formats': typeof ApiPublicFormatsRoute
   '/api/public/preview': typeof ApiPublicPreviewRoute
   '/api/public/track': typeof ApiPublicTrackRoute
+  '/api/public/zip': typeof ApiPublicZipRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/api/public/formats': typeof ApiPublicFormatsRoute
   '/api/public/preview': typeof ApiPublicPreviewRoute
   '/api/public/track': typeof ApiPublicTrackRoute
+  '/api/public/zip': typeof ApiPublicZipRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/api/public/formats'
     | '/api/public/preview'
     | '/api/public/track'
+    | '/api/public/zip'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/api/public/formats'
     | '/api/public/preview'
     | '/api/public/track'
+    | '/api/public/zip'
   id:
     | '__root__'
     | '/'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/api/public/formats'
     | '/api/public/preview'
     | '/api/public/track'
+    | '/api/public/zip'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -210,6 +222,7 @@ export interface RootRouteChildren {
   ApiPublicFormatsRoute: typeof ApiPublicFormatsRoute
   ApiPublicPreviewRoute: typeof ApiPublicPreviewRoute
   ApiPublicTrackRoute: typeof ApiPublicTrackRoute
+  ApiPublicZipRoute: typeof ApiPublicZipRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -312,6 +325,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTrackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/zip': {
+      id: '/api/public/zip'
+      path: '/api/public/zip'
+      fullPath: '/api/public/zip'
+      preLoaderRoute: typeof ApiPublicZipRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -330,6 +350,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicFormatsRoute: ApiPublicFormatsRoute,
   ApiPublicPreviewRoute: ApiPublicPreviewRoute,
   ApiPublicTrackRoute: ApiPublicTrackRoute,
+  ApiPublicZipRoute: ApiPublicZipRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

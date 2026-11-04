@@ -5,7 +5,11 @@ services:
     env_file:
       - .env
     ports:
-      - "8080:8080"
+      # Loopback only, on the host port the deployment docs use: the audio service
+      # holds the SoundCloud account and the API key, and the app reaches it over
+      # 127.0.0.1. Published on every interface, anyone who can route to the VPS
+      # has a downloader keyed to this account.
+      - "127.0.0.1:8090:8080"
     volumes:
       # SoundCloud rotates refresh tokens; this volume keeps the latest one.
       - cloudmp3-tokens:/data

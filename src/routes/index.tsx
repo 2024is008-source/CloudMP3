@@ -1,8 +1,35 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef, useEffect, useMemo, useSyncExternalStore } from "react";
-import { zip } from "fflate";
-import { convert, FORMATS, type Format } from "@/lib/convert";
-import { fetchCover, tagMp3 } from "@/lib/id3";
+import {
+  classifyError,
+  formatOfExt,
+  trackAppError,
+  trackCtaClicked,
+  trackDownloadCancelled,
+  trackDownloadComplete,
+  trackDownloadError,
+  trackDownloadStart,
+  trackFaqOpened,
+  trackFormatSelected,
+  trackPlaylistDownload,
+  trackPlaylistSelection,
+  trackSearch,
+  type DownloadInfo,
+  type DownloadMethod,
+  type FileFormat,
+} from "@/lib/analytics";
+import { FORMATS, type Format } from "@/lib/convert";
+import {
+  blobFromResponse,
+  downloadFailure,
+  filenameFromHeaders,
+  isAbort,
+  userError,
+} from "@/lib/download-http";
+import { routeForJob } from "@/lib/download-router";
+import { createJobSlot, type JobSlot } from "@/lib/job-slot";
+import { downloadTrackFile } from "@/lib/home-download";
+import { WAV_KBPS } from "@/lib/download-options";
 import {
   Download,
   FolderArchive,
@@ -34,6 +61,8 @@ import { z } from "zod";
 import { toast } from "sonner";
 
 import { getInfo } from "@/lib/sc.functions";
+import { saveDownload } from "@/lib/save-download";
+import { zipRequestBody } from "@/lib/zip-request";
 import { clearSelection, getSelection, subscribeSelection } from "@/lib/selection";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { SITE } from "@/lib/site";
@@ -51,11 +80,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 const HOME_FAQ = [
   {
     q: "How do I convert a SoundCloud track to MP3?",
-    a: "Copy the track link from SoundCloud, paste it into the box above, press Fetch, choose an MP3 bitrate (128 to 320kbps) and click the download arrow. The conversion runs in your browser.",
+    a: "Copy the track link from SoundCloud, paste it into the box above, press Fetch, choose an MP3 bitrate (128 to 320kbps) and click the download arrow. Small files convert in your browser; larger ones convert on our server and are deleted as they download.",
   },
   {
     q: "Can I download a whole SoundCloud playlist at once?",
-    a: "Yes. Paste a playlist or album link, then use Download ZIP to get every track in one archive with numbered filenames, or Download All to save each file separately.",
+    a: "Yes. Paste a playlist or album link, then use Download ZIP to pack its tracks into one archive with numbered filenames, or Download All to save each file separately. A very long playlist is limited by what this server allows in one archive.",
   },
   {
     q: "Can I paste an artist profile link?",
@@ -67,7 +96,7 @@ const HOME_FAQ = [
   },
   {
     q: "Is this SoundCloud to MP3 converter free?",
-    a: "Yes. There is no sign-up, no app and no download limit. Pick MP3 at 128, 192, 256 or 320kbps, WAV, or the original AAC file.",
+    a: "Yes. There is no sign-up and no app — you use it in the browser. Pick MP3 at 128, 192, 256 or 320kbps, WAV, or the original AAC file.",
   },
   {
     q: "Will the MP3 play on my MP3 player or car stereo?",
@@ -90,9 +119,9 @@ export const Route = createFileRoute("/")({
   validateSearch: searchSchema,
   head: () => ({
     ...seoHead({
-      title: "SoundCloud to MP3 Converter — Free, No Signup | CloudMP3",
+      title: "Free SoundCloud to MP3 Downloader Online",
       description:
-        "Convert SoundCloud tracks, albums and playlists to MP3 (up to 320kbps), WAV or original AAC — free, no sign-up, whole playlists as one ZIP.",
+        "Convert and download SoundCloud tracks to MP3 online for free. Enjoy fast, easy audio downloads with high-quality sound and no registration required.",
       path: "",
     }),
     scripts: [
@@ -168,7 +197,16 @@ type Job = {
   failed: number;
   current: string | null;
   paused: boolean;
+  /** Only a server ZIP reports bytes; a per-track job counts finished files. */
+  received?: number;
+  size?: number | null;
+  /** The files job whose work is FFmpeg's, so the panel can say where it runs. */
+  onServer?: boolean;
 };
+
+type OneResult =
+  | { ok: true; ext: string; bytes: number; method: DownloadMethod }
+  | { ok: false; error: unknown; cancelled?: boolean };
 
 // Rough bytes-per-second for the size estimate, keyed by format.
 const RATES: Record<Format, number> = {
@@ -186,6 +224,18 @@ const fmtSize = (bytes: number) =>
 
 const PAGE = 50;
 
+/** What GA4 calls the chosen quality, and the bitrate it implies. */
+function choiceFormat(fmt: Format): FileFormat {
+  if (fmt.startsWith("mp3")) return "mp3";
+  if (fmt === "wav") return "wav";
+  return "aac";
+}
+
+function choiceKbps(fmt: Format): number | null {
+  if (fmt.startsWith("mp3")) return Number(fmt.slice(4));
+  return fmt === "wav" ? WAV_KBPS : null;
+}
+
 function fmt(ms: number) {
   const s = Math.round(ms / 1000),
     h = Math.floor(s / 3600),
@@ -195,26 +245,6 @@ function fmt(ms: number) {
   return h ? `${h}:${p(m)}:${p(r)}` : `${m}:${p(r)}`;
 }
 const safe = (s: string) => s.replace(/[\\/:*?"<>|]/g, "_");
-
-async function fetchTrack(t: Track, fmt: Format, album?: string, track?: number) {
-  const q = fmt === "original-low" ? "low" : "high";
-  const r = await fetch(`/api/public/track?id=${t.id}&q=${q}`);
-  if (!r.ok) throw new Error(await r.text());
-  const raw = new Uint8Array(await r.arrayBuffer());
-  const out = await convert(raw, r.headers.get("X-File-Ext") ?? "m4a", fmt);
-  if (out.ext === "mp3") {
-    const cover = await fetchCover(t.artwork_url);
-    out.data = tagMp3(out.data, { title: t.title, artist: t.artist, album, track, cover });
-  }
-  return out;
-}
-function save(data: BlobPart, name: string, type: string) {
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([data], { type }));
-  a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-}
 
 function Index() {
   const { focus } = Route.useSearch();
@@ -232,18 +262,49 @@ function Index() {
   const [shown, setShown] = useState(PAGE);
   const cancelRef = useRef(false);
   const pauseRef = useRef(false);
+  // One controller and one busy flag for whichever job is running: a second
+  // click used to read the stale `job` state, overwrite the controller and leave
+  // the first request running with nobody left to cancel it.
+  const jobSlotRef = useRef<JobSlot | null>(null);
+  jobSlotRef.current ??= createJobSlot();
+  const jobSlot = jobSlotRef.current;
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (focus) inputRef.current?.focus();
   }, [focus]);
 
-  async function load(u: string, autoDownload = false) {
+  // Leaving the route stops the download workers, so a job cannot keep fetching
+  // and buffering audio for a page that is no longer on screen. An in-flight
+  // request is aborted too, which is what tells the server to drop the
+  // half-built archive or the converted file it was sending.
+  useEffect(
+    () => () => {
+      cancelRef.current = true;
+      jobSlot.cancel();
+    },
+    [jobSlot],
+  );
+
+  /**
+   * `origin` separates a link somebody pasted from one they chose off the page;
+   * only the pasted link is a search submission.
+   */
+  async function load(u: string, autoDownload = false, origin: "link" | "result" = "link") {
     setError(null);
     setLoading(true);
     try {
       const r = await getInfo({ data: { url: u } });
       if (r.ok) {
+        // A pasted link is counted as a search, but only by what it resolved to:
+        // the address itself is never sent.
+        if (origin === "link") {
+          trackSearch({
+            source: "link_box",
+            linkType: r.info.type,
+            resultCount: r.info.track_count,
+          });
+        }
         const first = r.info.type === "track" ? r.info.tracks[0] : undefined;
         if (first) {
           void navigate({
@@ -260,10 +321,14 @@ function Index() {
         setSortBy("default");
         setShown(PAGE);
       } else {
+        trackAppError({ stage: "metadata", error: r.error });
+        if (origin === "link") trackSearch({ source: "link_box", linkType: "invalid" });
         setError(r.error);
         toast.error(r.error);
       }
     } catch {
+      trackAppError({ stage: "metadata", error: "invalid link" });
+      if (origin === "link") trackSearch({ source: "link_box", linkType: "invalid" });
       setError("That doesn't look like a valid SoundCloud link.");
       toast.error("That doesn't look like a valid SoundCloud link.");
     } finally {
@@ -273,6 +338,7 @@ function Index() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    trackCtaClicked({ label: "fetch_link", page: "home" });
     await load(url.trim());
   }
 
@@ -282,34 +348,87 @@ function Index() {
     if (!picked) return;
     clearSelection();
     setUrl(picked.url);
-    void load(picked.url, picked.autoDownload);
+    void load(picked.url, picked.autoDownload, "result");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [picked]);
 
-  /** Download a single track. Returns true on success; toasts are left to the caller. */
-  async function one(t: Track): Promise<boolean> {
+  /** One file handed to the browser, or the reason it was not. Toasts stay with the caller. */
+  async function one(t: Track, signal: AbortSignal): Promise<OneResult> {
     setState((s) => ({ ...s, [t.id]: "busy" }));
+    const multi = info && info.tracks.length > 1;
+    const album = multi ? info.title : undefined;
+    const number = multi ? info.tracks.indexOf(t) + 1 : undefined;
     try {
-      const multi = info && info.tracks.length > 1;
-      const f = await fetchTrack(
-        t,
-        quality,
-        multi ? info.title : undefined,
-        multi ? info.tracks.indexOf(t) + 1 : undefined,
-      );
-      save(f.data as BlobPart, `${safe(`${t.artist} - ${t.title}`)}.${f.ext}`, f.mime);
+      // The route is the shared policy's, decided once, with no second guess
+      // when the service is unreachable: a server-only format fails plainly
+      // rather than becoming a different file in the tab.
+      const { file } = await downloadTrackFile(t, quality, { album, number }, signal);
+      const name = file.filename
+        ? safe(file.filename)
+        : `${safe(`${t.artist} - ${t.title}`)}.${file.ext}`;
+      saveDownload(file.data, name, file.mime);
       setState((s) => ({ ...s, [t.id]: "done" }));
-      return true;
-    } catch {
+      return { ok: true, ext: file.ext, bytes: file.bytes, method: file.method };
+    } catch (e) {
+      if (isAbort(e) || signal.aborted) {
+        setState((s) => {
+          const next = { ...s };
+          delete next[t.id];
+          return next;
+        });
+        return { ok: false, error: e, cancelled: true };
+      }
       setState((s) => ({ ...s, [t.id]: "err" }));
-      return false;
+      return { ok: false, error: e };
     }
   }
 
+  // The chosen quality before the file says what it really became.
+  const chosen = (method: DownloadMethod) => ({
+    fileFormat: choiceFormat(quality),
+    bitrate: choiceKbps(quality),
+    method,
+  });
+
+  /** Where this selection is produced, for the job-level events. */
+  function jobMethod(tracks: Track[]): DownloadMethod {
+    return routeForJob(
+      quality,
+      tracks.map((t) => t.duration),
+    );
+  }
+
   async function clickOne(t: Track) {
-    if (job) return;
-    if (await one(t)) toast.success(`Saved ${t.title}`);
-    else toast.error(`Couldn't download ${t.title}`);
+    const controller = jobSlot.take();
+    if (!controller) return;
+    const beganAt = performance.now();
+    const request: DownloadInfo = { ...chosen(jobMethod([t])), kind: "single" };
+    trackDownloadStart(request);
+    const result = await one(t, controller.signal);
+    jobSlot.release(controller);
+    const elapsedMs = Math.round(performance.now() - beganAt);
+    if (result.ok) {
+      trackDownloadComplete({
+        ...request,
+        method: result.method,
+        fileFormat: formatOfExt(result.ext),
+        bytes: result.bytes,
+        elapsedMs,
+      });
+      // The tab hands the finished file to the browser; only the browser knows
+      // whether the device kept it, so nothing here claims that it did.
+      toast.success(`Download started: ${t.title}`);
+    } else if (result.cancelled) {
+      trackDownloadCancelled(request);
+      toast.info("Download cancelled.");
+    } else {
+      trackDownloadError({
+        ...request,
+        errorType: classifyError(result.error),
+        elapsedMs,
+      });
+      toast.error(`${t.title}: ${userError(result.error)}`);
+    }
   }
 
   /** Wait out a pause / bail on cancel. Returns false when cancelled. */
@@ -319,10 +438,28 @@ function Index() {
   }
 
   async function runFiles(tracks: Track[]) {
-    if (job || tracks.length === 0) return;
+    if (tracks.length === 0) return;
+    const controller = jobSlot.take();
+    if (!controller) return;
+    const beganAt = performance.now();
+    const request = {
+      ...chosen(jobMethod(tracks)),
+      kind: "batch" as const,
+      trackCount: tracks.length,
+    };
+    trackPlaylistDownload({
+      kind: "batch",
+      trackCount: tracks.length,
+      fileFormat: request.fileFormat,
+      bitrate: request.bitrate,
+      method: request.method,
+    });
     cancelRef.current = false;
     pauseRef.current = false;
     let failed = 0;
+    let bytes = 0;
+    let firstError: unknown;
+    let ext = "";
     const queue = [...tracks];
     setJob({
       kind: "files",
@@ -331,6 +468,7 @@ function Index() {
       failed: 0,
       current: null,
       paused: false,
+      onServer: request.method === "server",
     });
     await Promise.all(
       Array.from({ length: 4 }, async () => {
@@ -338,70 +476,167 @@ function Index() {
           if (!(await gate())) return;
           const t = queue.shift()!;
           setJob((j) => (j ? { ...j, current: t.title } : j));
-          if (!(await one(t))) failed++;
-          setJob((j) => (j ? { ...j, done: j.done + 1, failed, current: null } : j));
-        }
-      }),
-    );
-    const cancelled = cancelRef.current;
-    setJob(null);
-    if (cancelled) toast.info("Download cancelled.");
-    else if (failed)
-      toast.error(`${failed} of ${tracks.length} downloads failed — use Retry failed.`);
-    else toast.success(`Saved ${tracks.length} track${tracks.length > 1 ? "s" : ""}`);
-  }
-
-  async function runZip(tracks: Track[], name: string) {
-    if (job || tracks.length === 0) return;
-    cancelRef.current = false;
-    pauseRef.current = false;
-    const files: Record<string, Uint8Array> = {};
-    let failed = 0;
-    const queue = [...tracks.entries()];
-    setJob({ kind: "zip", total: tracks.length, done: 0, failed: 0, current: null, paused: false });
-    await Promise.all(
-      Array.from({ length: 6 }, async () => {
-        while (queue.length) {
-          if (!(await gate())) return;
-          const [i, t] = queue.shift()!;
-          setJob((j) => (j ? { ...j, current: t.title } : j));
-          setState((s) => ({ ...s, [t.id]: "busy" }));
-          try {
-            const f = await fetchTrack(t, quality, name, i + 1);
-            files[
-              `${String(i + 1).padStart(2, "0")} ${safe(`${t.artist} - ${t.title}`)}.${f.ext}`
-            ] = f.data;
-            setState((s) => ({ ...s, [t.id]: "done" }));
-          } catch {
+          const result = await one(t, controller.signal);
+          if (result.ok) {
+            bytes += result.bytes;
+            ext = result.ext;
+          } else if (!result.cancelled) {
             failed++;
-            setState((s) => ({ ...s, [t.id]: "err" }));
+            firstError ??= result.error;
           }
           setJob((j) => (j ? { ...j, done: j.done + 1, failed, current: null } : j));
         }
       }),
     );
-    if (cancelRef.current) {
-      setJob(null);
-      toast.info("ZIP cancelled.");
-      return;
+    const cancelled = cancelRef.current;
+    const elapsedMs = Math.round(performance.now() - beganAt);
+    jobSlot.release(controller);
+    setJob(null);
+    if (cancelled) {
+      trackDownloadCancelled(request);
+      toast.info("Download cancelled.");
+    } else if (failed) {
+      trackAppError({ stage: "playlist", error: firstError });
+      trackDownloadError({
+        ...request,
+        fileFormat: ext ? formatOfExt(ext) : request.fileFormat,
+        errorType: classifyError(firstError),
+        trackCount: tracks.length - failed,
+        bytes,
+        elapsedMs,
+      });
+      toast.error(`${failed} of ${tracks.length} downloads failed — use Retry failed.`);
+    } else {
+      trackDownloadComplete({
+        ...request,
+        fileFormat: ext ? formatOfExt(ext) : request.fileFormat,
+        bytes,
+        elapsedMs,
+      });
+      toast.success(`Download started for ${tracks.length} track${tracks.length > 1 ? "s" : ""}`);
     }
-    if (Object.keys(files).length === 0) {
+  }
+
+  /**
+   * A server-built ZIP reports only how many tracks it packed and which ids it
+   * could not fetch, so the per-row marks are applied from those ids at the end.
+   */
+  function markRows(tracks: Track[], status: (id: number) => "busy" | "done" | "err" | null) {
+    setState((s) => {
+      const next = { ...s };
+      for (const t of tracks) {
+        const value = status(t.id);
+        if (value) next[t.id] = value;
+        else delete next[t.id];
+      }
+      return next;
+    });
+  }
+
+  async function runZip(tracks: Track[], name: string) {
+    if (tracks.length === 0) return;
+    const controller = jobSlot.take();
+    if (!controller) return;
+    const beganAt = performance.now();
+    const audio = chosen("server");
+    const request: DownloadInfo = {
+      fileFormat: "zip",
+      contentFormat: audio.fileFormat,
+      bitrate: audio.bitrate,
+      method: "server",
+      kind: "zip",
+      trackCount: tracks.length,
+    };
+    trackPlaylistDownload({
+      kind: "zip",
+      trackCount: tracks.length,
+      fileFormat: "zip",
+      contentFormat: audio.fileFormat,
+      bitrate: audio.bitrate,
+      method: "server",
+    });
+    cancelRef.current = false;
+    pauseRef.current = false;
+    setJob({
+      kind: "zip",
+      total: tracks.length,
+      done: 0,
+      failed: 0,
+      // Until the first byte the server is doing all of the work, so the panel
+      // says where the wait is.
+      current: "Packing on the server",
+      paused: false,
+      received: 0,
+      size: null,
+    });
+    markRows(tracks, () => "busy");
+
+    let failedIds: number[] = [];
+    try {
+      const sentAt = performance.now();
+      const res = await fetch("/api/public/zip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(zipRequestBody(name, tracks, quality)),
+        signal: controller.signal,
+      });
+      if (!res.ok) throw await downloadFailure(res);
+      // The service answers only once the archive is whole, so everything up to
+      // this line was the server packing it; from here the bytes are moving.
+      const serverWaitMs = Math.round(performance.now() - sentAt);
+      setJob((j) => (j ? { ...j, current: "Receiving the archive" } : j));
+
+      const blob = await blobFromResponse(
+        res,
+        (received, size) =>
+          setJob((j) => (j ? { ...j, received, size: size ?? j.size ?? null } : j)),
+        controller.signal,
+      );
+
+      failedIds = (res.headers.get("X-Zip-Failed-Ids") ?? "")
+        .split(",")
+        .filter(Boolean)
+        .map(Number);
+      const packed = Number(res.headers.get("X-Zip-Tracks")) || tracks.length - failedIds.length;
+      markRows(tracks, (id) => (failedIds.includes(id) ? "err" : "done"));
+      saveDownload(blob, filenameFromHeaders(res) ?? `${safe(name)}.zip`, "application/zip");
       setJob(null);
-      toast.error("Every track failed — nothing to ZIP.");
-      return;
-    }
-    setJob((j) => (j ? { ...j, current: "Building ZIP…" } : j));
-    zip(files, { level: 0 }, (err, data) => {
-      if (!err) {
-        save(data as BlobPart, `${safe(name)}.zip`, "application/zip");
-        toast.success(
-          `ZIP ready — ${Object.keys(files).length} tracks${failed ? ` (${failed} skipped)` : ""}`,
+      trackDownloadComplete({
+        ...request,
+        trackCount: packed,
+        failedTracks: failedIds.length,
+        bytes: blob.size,
+        elapsedMs: Math.round(performance.now() - beganAt),
+        serverWaitMs,
+      });
+      if (failedIds.length) {
+        trackAppError({ stage: "zip", error: "no_stream" });
+        toast.error(
+          `ZIP handed to your browser with ${packed} track${packed === 1 ? "" : "s"} — ${failedIds.length} could not be packed.`,
         );
       } else {
-        toast.error("Couldn't build the ZIP archive.");
+        toast.success(`ZIP handed to your browser — ${packed} track${packed === 1 ? "" : "s"}`);
+      }
+    } catch (e) {
+      const elapsedMs = Math.round(performance.now() - beganAt);
+      if (controller.signal.aborted) {
+        trackDownloadCancelled(request);
+        markRows(tracks, () => null);
+        toast.info("ZIP cancelled.");
+      } else {
+        trackAppError({ stage: "zip", error: e });
+        trackDownloadError({
+          ...request,
+          errorType: classifyError(e),
+          elapsedMs,
+        });
+        markRows(tracks, () => "err");
+        toast.error(userError(e));
       }
       setJob(null);
-    });
+    } finally {
+      jobSlot.release(controller);
+    }
   }
 
   function togglePause() {
@@ -412,10 +647,32 @@ function Index() {
   function cancelJob() {
     cancelRef.current = true;
     pauseRef.current = false;
+    // Aborting is what reaches an in-flight request: the workers only check the
+    // flag between tracks, so without this a cancel waits out the current file.
+    jobSlot.cancel();
   }
 
   const failedTracks = info ? info.tracks.filter((t) => state[t.id] === "err") : [];
   const selectedTracks = info ? info.tracks.filter((t) => selected.has(t.id)) : [];
+
+  // A per-track job counts finished files; a server ZIP counts the bytes it has
+  // been sent, because the archive only exists once the server has finished it.
+  const jobPct = job
+    ? job.kind === "zip" && job.size
+      ? Math.min(100, Math.round(((job.received ?? 0) / job.size) * 100))
+      : Math.round((job.done / Math.max(1, job.total)) * 100)
+    : 0;
+  // A server ZIP has no honest percentage until the archive's length is known;
+  // a bar parked at 0% reads as a stalled download rather than a server working.
+  const jobKnownPct = job !== null && !(job.kind === "zip" && !job.size);
+  const jobLabel =
+    job?.kind === "zip"
+      ? job.size && job.received
+        ? `ZIP ${fmtSize(job.received)} of ${fmtSize(job.size)}`
+        : "ZIP on the server"
+      : job
+        ? `Downloading ${job.done}/${job.total}`
+        : "";
 
   function toggleSelect(id: number) {
     setSelected((s) => {
@@ -428,9 +685,15 @@ function Index() {
 
   function toggleSelectAll() {
     if (!info) return;
-    setSelected((s) =>
-      s.size === info.tracks.length ? new Set() : new Set(info.tracks.map((t) => t.id)),
-    );
+    const next =
+      selected.size === info.tracks.length
+        ? new Set<number>()
+        : new Set(info.tracks.map((t) => t.id));
+    setSelected(next);
+    trackPlaylistSelection({
+      action: next.size === 0 ? "clear" : "select_all",
+      trackCount: next.size,
+    });
   }
 
   const visibleTracks = useMemo(() => {
@@ -451,7 +714,7 @@ function Index() {
   const profileSets = info?.type === "profile" ? (info.sets ?? []) : [];
 
   return (
-    <main className="relative isolate mx-auto w-full max-w-page px-5 pb-section pt-4 md:pt-8">
+    <main className="relative isolate mx-auto w-full max-w-page px-5 pt-4 md:pt-8">
       {!info && <Equalizer />}
       {!info ? (
         <section className="mx-auto mt-0 max-w-2xl text-center md:mt-4">
@@ -500,13 +763,13 @@ function Index() {
                 }
               }}
               aria-label="Paste link from clipboard"
-              className="hidden items-center gap-1.5 rounded-full border border-border px-3.5 py-2.5 text-xs font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground sm:inline-flex"
+              className="hidden h-11 items-center gap-1.5 rounded-full border border-border px-4 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground sm:inline-flex"
             >
               <ClipboardPaste className="h-4 w-4" /> Paste
             </button>
             <button
               disabled={loading}
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
+              className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -522,17 +785,13 @@ function Index() {
               {error}
             </p>
           )}
-          <p className="mt-8 text-xs text-muted-foreground">
+          <p className="mt-8 text-sm text-muted-foreground">
             {SITE.name} works best on content you own or have permission to save.
           </p>
         </section>
       ) : null}
       {loading && !info && (
-        <section
-          aria-busy="true"
-          aria-label="Loading track information"
-          className="mt-12"
-        >
+        <section aria-busy="true" aria-label="Loading track information" className="mt-12">
           <div className="flex flex-col gap-6 rounded-3xl border border-border bg-card p-6 sm:flex-row sm:items-end">
             <Skeleton className="h-44 w-44 rounded-2xl" />
             <div className="w-full space-y-3">
@@ -554,7 +813,7 @@ function Index() {
             <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
               Convert a SoundCloud Link to MP3 in Four Steps
             </h2>
-            <ol className="mt-5 grid gap-3 sm:grid-cols-2">
+            <ol className="mt-8 grid gap-3 sm:grid-cols-2">
               {[
                 {
                   icon: Copy,
@@ -574,7 +833,7 @@ function Index() {
                 {
                   icon: Download,
                   t: "Download",
-                  b: "Save one track, every track, or the whole playlist as a single ZIP.",
+                  b: "Save one track, a selection, or the whole playlist as a single ZIP.",
                 },
               ].map(({ icon: Icon, t, b }, i) => (
                 <li
@@ -582,7 +841,7 @@ function Index() {
                   className="group rounded-2xl border border-border bg-card p-5 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                       <Icon className="h-5 w-5" />
                     </span>
                     <h3 className="font-semibold">
@@ -593,7 +852,7 @@ function Index() {
                 </li>
               ))}
             </ol>
-            <p className="mt-4 max-w-prose text-sm text-muted-foreground">
+            <p className="mt-6 max-w-prose text-sm text-muted-foreground">
               Need iPhone or Android steps? Read the full{" "}
               <Link
                 to="/how-to-download"
@@ -608,7 +867,7 @@ function Index() {
             <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
               Why Use {SITE.name}? High-Bitrate Audio &amp; ID3 Tag Preservation
             </h2>
-            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {[
                 {
                   icon: Zap,
@@ -638,14 +897,14 @@ function Index() {
                 {
                   icon: PackageX,
                   t: "Nothing to install",
-                  b: "MP3 and WAV are encoded in your browser from the original stream, so nothing is stored on our servers.",
+                  b: "MP3 and WAV are encoded from the authorized stream, and a converted file is deleted the moment your download ends.",
                 },
               ].map(({ icon: Icon, t, b }) => (
                 <div
                   key={t}
                   className="group rounded-2xl border border-border bg-card p-5 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10"
                 >
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                     <Icon className="h-5 w-5" />
                   </span>
                   <h3 className="mt-3 font-semibold">{t}</h3>
@@ -658,7 +917,16 @@ function Index() {
             <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
               Frequently Asked Questions About SoundCloud Audio Extraction
             </h2>
-            <Accordion type="single" collapsible className="mt-5 space-y-3">
+            <Accordion
+              type="single"
+              collapsible
+              className="mt-8 space-y-3"
+              onValueChange={(value) => {
+                if (!value) return;
+                const index = Number(value.slice("faq-".length));
+                if (Number.isInteger(index)) trackFaqOpened({ page: "home", index });
+              }}
+            >
               {HOME_FAQ.map((f, i) => (
                 <AccordionItem
                   key={f.q}
@@ -674,7 +942,7 @@ function Index() {
                 </AccordionItem>
               ))}
             </Accordion>
-            <p className="mt-5 max-w-prose text-sm text-muted-foreground">
+            <p className="mt-6 max-w-prose text-sm text-muted-foreground">
               More answers on the{" "}
               <Link to="/faq" className="text-primary underline-offset-4 hover:underline">
                 features &amp; FAQ page
@@ -695,7 +963,7 @@ function Index() {
               {info.artwork_url ? (
                 <img
                   src={info.artwork_url}
-                  alt={info.title}
+                  alt={`${info.title} artwork`}
                   className="h-44 w-44 rounded-2xl object-cover shadow-2xl shadow-primary/20 ring-1 ring-border sm:h-52 sm:w-52"
                 />
               ) : (
@@ -742,10 +1010,21 @@ function Index() {
             </div>
             {job && (
               <div className="relative mt-6">
-                <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
+                <div
+                  role="progressbar"
+                  aria-label={jobLabel}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={jobKnownPct ? jobPct : undefined}
+                  aria-valuetext={jobKnownPct ? jobLabel : undefined}
+                  aria-busy={jobKnownPct ? undefined : true}
+                  className="h-1.5 overflow-hidden rounded-full bg-secondary"
+                >
                   <div
-                    className="h-full rounded-full bg-primary transition-all duration-300"
-                    style={{ width: `${Math.round((job.done / job.total) * 100)}%` }}
+                    className={`h-full rounded-full bg-primary transition-all duration-300 ${
+                      jobKnownPct ? "" : "w-1/3 animate-pulse"
+                    }`}
+                    style={jobKnownPct ? { width: `${jobPct}%` } : undefined}
                   />
                 </div>
               </div>
@@ -754,38 +1033,45 @@ function Index() {
 
           {/* Download progress manager */}
           {job && (
-            <div className="mt-4 rounded-2xl border border-border bg-card/60 p-4 backdrop-blur-xl">
+            <div
+              role="status"
+              aria-live="polite"
+              className="mt-4 rounded-2xl border border-border bg-card/60 p-4 backdrop-blur-xl"
+            >
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
                 <span className="inline-flex items-center gap-2 font-semibold">
                   <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  {job.kind === "zip" ? "Preparing ZIP" : "Downloading"} {job.done}/{job.total}
+                  {jobLabel}
                 </span>
                 {job.current && (
                   <span className="min-w-0 max-w-48 truncate text-muted-foreground">
                     Now: {job.current}
                   </span>
                 )}
-                <span className="text-muted-foreground">
-                  Remaining: {Math.max(0, job.total - job.done)}
-                </span>
+                {job.kind === "files" && job.onServer && (
+                  <span className="text-muted-foreground">Converting on the server</span>
+                )}
+                {job.kind === "files" && (
+                  <span className="text-muted-foreground">
+                    Remaining: {Math.max(0, job.total - job.done)}
+                  </span>
+                )}
                 {job.failed > 0 && <span className="text-destructive">Failed: {job.failed}</span>}
                 <span className="ml-auto flex items-center gap-2">
-                  <button
-                    onClick={togglePause}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium transition hover:bg-accent"
-                  >
-                    {job.paused ? (
-                      <Play className="h-3.5 w-3.5" />
-                    ) : (
-                      <Pause className="h-3.5 w-3.5" />
-                    )}
-                    {job.paused ? "Resume" : "Pause"}
-                  </button>
+                  {job.kind === "files" && (
+                    <button
+                      onClick={togglePause}
+                      className="inline-flex h-11 items-center gap-1.5 rounded-full border border-border px-4 text-sm font-medium transition hover:bg-accent"
+                    >
+                      {job.paused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+                      {job.paused ? "Resume" : "Pause"}
+                    </button>
+                  )}
                   <button
                     onClick={cancelJob}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-destructive transition hover:bg-accent"
+                    className="inline-flex h-11 items-center gap-1.5 rounded-full border border-border px-4 text-sm font-medium text-destructive transition hover:bg-accent"
                   >
-                    <XCircle className="h-3.5 w-3.5" /> Cancel
+                    <XCircle className="h-4 w-4" /> Cancel
                   </button>
                 </span>
               </div>
@@ -814,7 +1100,16 @@ function Index() {
                   <Music className="h-4 w-4" />
                   <select
                     value={quality}
-                    onChange={(e) => setQuality(e.target.value as Format)}
+                    onChange={(e) => {
+                      const next = e.target.value as Format;
+                      setQuality(next);
+                      trackFormatSelected({
+                        fileFormat: choiceFormat(next),
+                        bitrate: choiceKbps(next),
+                        page: "playlist",
+                      });
+                    }}
+                    aria-label="Download quality"
                     className="bg-transparent text-foreground outline-none [&>option]:bg-popover"
                   >
                     {FORMATS.map((f) => (
@@ -886,13 +1181,15 @@ function Index() {
               {/* Track list */}
               <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-card/40">
                 <div className="flex items-center gap-3 border-b border-border bg-muted/60 px-4 py-2 text-xs uppercase tracking-wider text-muted-foreground">
-                  <input
-                    type="checkbox"
-                    checked={info.tracks.length > 0 && selected.size === info.tracks.length}
-                    onChange={toggleSelectAll}
-                    aria-label="Select all tracks"
-                    className="h-4 w-4 shrink-0 accent-primary"
-                  />
+                  <label className="-m-2.5 grid h-11 w-11 shrink-0 place-items-center">
+                    <input
+                      type="checkbox"
+                      checked={info.tracks.length > 0 && selected.size === info.tracks.length}
+                      onChange={toggleSelectAll}
+                      aria-label="Select all tracks"
+                      className="h-6 w-6 accent-primary"
+                    />
+                  </label>
                   <span className="hidden w-6 sm:block">#</span>
                   <span className="flex-1">Title</span>
                   <span className="hidden w-12 text-right sm:block">Time</span>
@@ -903,13 +1200,15 @@ function Index() {
                     key={t.id}
                     className="flex items-center gap-3 border-b border-border/60 px-4 py-2.5 transition last:border-0 hover:bg-card"
                   >
-                    <input
-                      type="checkbox"
-                      checked={selected.has(t.id)}
-                      onChange={() => toggleSelect(t.id)}
-                      aria-label={`Select ${t.title}`}
-                      className="h-4 w-4 shrink-0 accent-primary"
-                    />
+                    <label className="-m-2.5 grid h-11 w-11 shrink-0 place-items-center">
+                      <input
+                        type="checkbox"
+                        checked={selected.has(t.id)}
+                        onChange={() => toggleSelect(t.id)}
+                        aria-label={`Select ${t.title}`}
+                        className="h-6 w-6 accent-primary"
+                      />
+                    </label>
                     <span className="hidden w-6 text-sm text-muted-foreground sm:block">
                       {i + 1}
                     </span>
@@ -938,7 +1237,7 @@ function Index() {
                       aria-label={
                         state[t.id] === "err" ? `Retry ${t.title}` : `Download ${t.title}`
                       }
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition hover:bg-accent disabled:opacity-60"
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition hover:bg-accent disabled:opacity-60"
                     >
                       {state[t.id] === "busy" ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -985,7 +1284,7 @@ function Index() {
               {profileSets.map((s) => (
                 <button
                   key={s.id}
-                  onClick={() => load(s.permalink_url)}
+                  onClick={() => load(s.permalink_url, false, "result")}
                   disabled={loading}
                   className="flex w-full items-center gap-3 border-b border-border/60 px-4 py-2.5 text-left transition last:border-0 hover:bg-card disabled:opacity-60"
                 >
@@ -1024,20 +1323,23 @@ function Index() {
               <button
                 onClick={() => runFiles(selectedTracks)}
                 disabled={!!job}
-                className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
+                className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
               >
                 <Download className="h-4 w-4" /> Download
               </button>
               <button
                 onClick={() => runZip(selectedTracks, `${info.title} (selection)`)}
                 disabled={!!job}
-                className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-4 py-2 text-sm font-semibold transition hover:bg-accent disabled:opacity-60"
+                className="inline-flex h-11 items-center gap-2 rounded-full border border-border bg-secondary px-4 text-sm font-semibold transition hover:bg-accent disabled:opacity-60"
               >
                 <FolderArchive className="h-4 w-4" /> ZIP
               </button>
               <button
-                onClick={() => setSelected(new Set())}
-                className="ml-auto inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm text-muted-foreground transition hover:bg-accent hover:text-foreground"
+                onClick={() => {
+                  setSelected(new Set());
+                  trackPlaylistSelection({ action: "clear", trackCount: 0 });
+                }}
+                className="ml-auto inline-flex h-11 items-center gap-1.5 rounded-full px-3 text-sm text-muted-foreground transition hover:bg-accent hover:text-foreground"
               >
                 <XCircle className="h-4 w-4" /> Clear
               </button>

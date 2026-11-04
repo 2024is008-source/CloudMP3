@@ -21,7 +21,6 @@ Allow: /
 User-agent: *
 Allow: /
 Disallow: /api/
-Disallow: /*?url=*
 
 Sitemap: ${SITE.origin}/sitemap.xml
 `;

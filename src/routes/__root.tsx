@@ -4,16 +4,18 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 
 import appCss from "../styles.css?url";
 import { Footer } from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
 import { Toaster } from "@/components/ui/sonner";
+import { initAnalytics, trackPageView } from "@/lib/analytics";
 import { SITE } from "@/lib/site";
 import { absoluteUrl } from "@/lib/seo";
 
@@ -92,7 +94,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap",
+      },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
@@ -141,11 +146,34 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * GA4 lives outside the SEO head: one bootstrap on mount, then a view per
+ * address. The href is only a trigger — `trackPageView` ignores an address it
+ * has just reported, so a remount or a re-render cannot double-count.
+ */
+function Analytics() {
+  const href = useRouterState({ select: (state) => state.location.href });
+  const status = useRouterState({ select: (state) => state.status });
+
+  useEffect(() => {
+    initAnalytics();
+    if (status !== "idle") return;
+    // A navigation commits its address before the new page renders, and the
+    // router writes the title after that. Waiting for the route to settle keeps
+    // `page_title` describing the page the visitor is on, not the one they left.
+    const timer = setTimeout(trackPageView, 0);
+    return () => clearTimeout(timer);
+  }, [href, status]);
+
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
+      <Analytics />
       <div className="flex min-h-screen flex-col">
         <Navbar />
         <div className="flex-1 pt-16">

@@ -46,9 +46,16 @@ export const Route = createFileRoute("/api/public/preview")({
           headers.set("Content-Length", String(total));
           return new Response(preview.data as unknown as BodyInit, { status: 200, headers });
         } catch (e) {
-          return new Response(e instanceof Error ? e.message : "Preview failed", {
-            status: e instanceof Error && /not authorized/i.test(e.message) ? 403 : 404,
-          });
+          // The reason goes to the server log, not to the browser: an upstream
+          // message can name a URL or a SoundCloud response we should not echo.
+          console.error(`[preview] track ${id} failed:`, e);
+          const refused = /not authorized/i.test(e instanceof Error ? e.message : "");
+          return new Response(
+            refused
+              ? "This track isn't available for preview."
+              : "SoundCloud has no preview for this track.",
+            { status: refused ? 403 : 404 },
+          );
         }
       },
     },

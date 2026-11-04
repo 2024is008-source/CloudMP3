@@ -1,6 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { AlertCircle, ArrowLeft, Home, RotateCcw } from "lucide-react";
+import { AlertCircle, ChevronRight, Home, RotateCcw } from "lucide-react";
 
 import { DownloadPanel } from "@/components/track/DownloadPanel";
 import { PreviewPlayer } from "@/components/track/PreviewPlayer";
@@ -8,6 +8,7 @@ import { RelatedTracks } from "@/components/track/RelatedTracks";
 import { TrackHero } from "@/components/track/TrackHero";
 import { TrackInfoCard } from "@/components/track/TrackInfoCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { trackAppError } from "@/lib/analytics";
 import { getTrackPage } from "@/lib/sc.functions";
 import { formatDuration } from "@/lib/search-rank";
 import { SITE } from "@/lib/site";
@@ -138,6 +139,15 @@ function TrackSkeleton() {
 }
 
 function TrackUnavailable({ error, onRetry }: { error: string; onRetry: () => void }) {
+  // The notice is on screen for every re-render of a dead loader, so the failure
+  // is reported once per visit rather than once per paint.
+  const reported = useRef(false);
+  useEffect(() => {
+    if (reported.current) return;
+    reported.current = true;
+    trackAppError({ stage: "metadata", error });
+  }, [error]);
+
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col items-center px-4 py-20 text-center">
       <span className="flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10 text-destructive">
@@ -151,14 +161,14 @@ function TrackUnavailable({ error, onRetry }: { error: string; onRetry: () => vo
         <button
           type="button"
           onClick={onRetry}
-          className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110"
+          className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:brightness-110"
         >
           <RotateCcw className="h-4 w-4" aria-hidden /> Try again
         </button>
         <Link
           to="/"
           search={{ focus: false }}
-          className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-semibold text-foreground transition hover:bg-accent"
+          className="inline-flex h-11 items-center gap-2 rounded-full border border-border px-5 text-sm font-semibold text-foreground transition hover:bg-accent"
         >
           <Home className="h-4 w-4" aria-hidden /> Go home
         </Link>
@@ -171,9 +181,7 @@ function TrackPage() {
   const data = Route.useLoaderData();
   const { download } = Route.useSearch();
   const router = useRouter();
-  const { formats, loading: formatsLoading } = useTrackFormats(
-    data.ok ? data.track.id : 0,
-  );
+  const { formats, loading: formatsLoading } = useTrackFormats(data.ok ? data.track.id : 0);
 
   useEffect(() => {
     if (!download) return;
@@ -191,22 +199,25 @@ function TrackPage() {
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 pb-20 pt-6 md:pt-10">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <Link
-          to="/"
-          search={{ focus: false }}
-          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/40 px-3.5 py-2 text-xs font-semibold text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" aria-hidden /> Back to downloader
-        </Link>
-        <Link
-          to="/search"
-          search={{ q: `${track.artist} ${track.title}`.slice(0, 120), tab: "all" }}
-          className="text-xs font-semibold text-muted-foreground transition hover:text-primary"
-        >
-          Find more on SoundCloud →
-        </Link>
-      </div>
+      <nav aria-label="Breadcrumb" className="mb-2">
+        <ol className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+          <li>
+            <Link
+              to="/"
+              search={{ focus: false }}
+              className="inline-flex h-11 items-center gap-1.5 rounded-full px-2 font-semibold transition hover:bg-accent hover:text-foreground"
+            >
+              <Home className="h-4 w-4" aria-hidden /> Home
+            </Link>
+          </li>
+          <li aria-hidden className="shrink-0">
+            <ChevronRight className="h-4 w-4" />
+          </li>
+          <li aria-current="page" className="min-w-0 truncate text-foreground">
+            {track.title}
+          </li>
+        </ol>
+      </nav>
 
       <TrackHero track={track} />
 

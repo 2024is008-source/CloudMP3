@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import re
 import time
 from dataclasses import dataclass
@@ -9,10 +10,13 @@ import httpx
 
 from config import Settings
 from errors import ServiceError
+from net_guard import MAX_REDIRECTS, inspect_page_url, media_client
 
 API = "https://api-v2.soundcloud.com"
 SCRIPT_RE = re.compile(r'<script crossorigin src="([^"]+)"')
 CLIENT_RE = re.compile(r'client_id\s*[:=]\s*"([a-zA-Z0-9]{32})"')
+
+logger = logging.getLogger("cloudmp3.sc_api")
 
 
 @dataclass(frozen=True)
@@ -39,7 +43,10 @@ class SoundCloudApi:
 
     async def _scrape_client_id(self) -> str:
         headers = {"User-Agent": self._settings.user_agent}
-        async with httpx.AsyncClient(timeout=20.0, headers=headers, follow_redirects=True) as client:
+        # The script addresses come out of HTML we do not control, so they are
+        # fetched through the guarded client: a page that names an internal address
+        # gets skipped rather than turning the VPS into a proxy for it.
+        async with media_client(20.0, headers=headers, max_redirects=MAX_REDIRECTS) as client:
             page = await client.get("https://soundcloud.com/")
             scripts = SCRIPT_RE.findall(page.text)
             for src in reversed(scripts):
@@ -68,10 +75,8 @@ class SoundCloudApi:
 
     async def track(self, track_id: int) -> ApiTrack:
         last_status: int | None = None
-        async with httpx.AsyncClient(
-            timeout=20.0,
-            headers={"User-Agent": self._settings.user_agent},
-            follow_redirects=True,
+        async with media_client(
+            20.0, headers={"User-Agent": self._settings.user_agent}
         ) as client:
             for attempt in range(2):
                 if attempt == 0 and self._settings.client_id:
@@ -114,6 +119,13 @@ class SoundCloudApi:
         if not isinstance(permalink, str) or not permalink:
             raise ServiceError(404, "not_found", "This track has no public SoundCloud page.")
         permalink = permalink.replace("http://", "https://", 1)
+        # This address is handed to yt-dlp, which opens its own sockets and cannot
+        # be guarded by the HTTP client here, so a page that is not on
+        # soundcloud.com is refused before it can become someone else's request.
+        reason = inspect_page_url(permalink)
+        if reason is not None:
+            logger.warning("a track page was refused, %s", reason)
+            raise ServiceError(404, "not_found", "This track has no public SoundCloud page.")
         user = data.get("user") if isinstance(data.get("user"), dict) else {}
         return ApiTrack(
             id=int(data.get("id")),

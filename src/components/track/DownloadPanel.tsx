@@ -11,8 +11,29 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import {
+  classifyError,
+  formatOfExt,
+  trackAppError,
+  trackDownloadCancelled,
+  trackDownloadComplete,
+  trackDownloadError,
+  trackDownloadStart,
+  trackExternalLink,
+  trackFormatSelected,
+  type DownloadInfo,
+} from "@/lib/analytics";
 import { estimateBytes, formatBytes } from "@/lib/audio-size";
 import { convert, type Format } from "@/lib/convert";
+import {
+  downloadFailure,
+  filenameFromHeaders,
+  readResponse,
+  safeName,
+  userError,
+  withExtension,
+} from "@/lib/download-http";
+import { selectDownloadRoute } from "@/lib/download-router";
 import {
   buildDownloadOptions,
   canDownload,
@@ -20,6 +41,7 @@ import {
   type DownloadOption,
 } from "@/lib/download-options";
 import { fetchCover, tagMp3 } from "@/lib/id3";
+import { saveDownload } from "@/lib/save-download";
 import type { TrackDetails } from "@/lib/soundcloud.server";
 import type { TrackFormats } from "@/lib/track-formats";
 import { cn } from "@/lib/utils";
@@ -41,99 +63,9 @@ const PHASE_LABEL: Record<Exclude<Phase, "error">, string> = {
   decoding: "Decoding audio",
   encoding: "Re-encoding audio",
   tagging: "Writing ID3 tags",
-  saving: "Saving file",
-  done: "Download complete",
+  saving: "Handing to your browser",
+  done: "File ready",
 };
-
-function safeName(value: string): string {
-  return value.replace(/[\\/:*?"<>|]/g, "_");
-}
-
-function saveFile(data: Uint8Array, name: string, type: string) {
-  const url = URL.createObjectURL(new Blob([data as BlobPart], { type }));
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = name;
-  anchor.rel = "noopener";
-  anchor.click();
-  setTimeout(() => URL.revokeObjectURL(url), 10_000);
-}
-
-function totalFromHeaders(res: Response): number | null {
-  const length = Number(res.headers.get("Content-Length"));
-  if (Number.isFinite(length) && length > 0) return length;
-  const estimate = Number(res.headers.get("X-Total-Bytes"));
-  return Number.isFinite(estimate) && estimate > 0 ? estimate : null;
-}
-
-async function readResponse(
-  res: Response,
-  onProgress: (received: number, total: number | null) => void,
-  signal: AbortSignal,
-): Promise<Uint8Array> {
-  const total = totalFromHeaders(res);
-  if (!res.body) {
-    const bytes = new Uint8Array(await res.arrayBuffer());
-    onProgress(bytes.length, total ?? bytes.length);
-    return bytes;
-  }
-  const reader = res.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let received = 0;
-  while (true) {
-    if (signal.aborted) {
-      await reader.cancel();
-      throw new DOMException("Aborted", "AbortError");
-    }
-    const { done, value } = await reader.read();
-    if (done) break;
-    if (value) {
-      chunks.push(value);
-      received += value.length;
-      onProgress(received, total);
-    }
-  }
-  const out = new Uint8Array(received);
-  let offset = 0;
-  for (const chunk of chunks) {
-    out.set(chunk, offset);
-    offset += chunk.length;
-  }
-  onProgress(received, total ?? received);
-  return out;
-}
-
-function filenameFromHeaders(res: Response): string | null {
-  const direct = res.headers.get("X-Filename");
-  if (direct) {
-    try {
-      return decodeURIComponent(direct);
-    } catch {
-      /* ignore */
-    }
-  }
-  const disposition = res.headers.get("Content-Disposition") ?? "";
-  const encoded = /filename\*=UTF-8''([^;]+)/i.exec(disposition);
-  if (encoded?.[1]) {
-    try {
-      return decodeURIComponent(encoded[1]);
-    } catch {
-      /* ignore */
-    }
-  }
-  const plain = /filename="([^"]+)"/i.exec(disposition);
-  return plain?.[1] ?? null;
-}
-
-function withExtension(name: string, ext: string): string {
-  const cleaned = safeName(name);
-  return /\.[a-z0-9]{1,6}$/i.test(cleaned) ? cleaned : `${cleaned}.${ext}`;
-}
-
-async function errorText(res: Response): Promise<string> {
-  const text = (await res.text()).trim();
-  return (text || "The download could not start.").slice(0, 300);
-}
 
 function optionSize(option: DownloadOption, duration: number): string {
   if (option.bytes) return formatBytes(option.bytes);
@@ -179,12 +111,39 @@ export function DownloadPanel({
   const start = useCallback(async () => {
     if (!option || !allowed) return;
     const fmt = option;
+    const route = selectDownloadRoute({
+      format:
+        fmt.kind === "original"
+          ? "original"
+          : fmt.kind === "stream"
+            ? "stream"
+            : fmt.kind === "mp3"
+              ? "mp3"
+              : "wav",
+      estimatedBytes: estimateBytes(track.duration, fmt.kbps ?? 0),
+      bitrate: fmt.kbps,
+    });
     const controller = new AbortController();
     abortRef.current?.abort();
     abortRef.current = controller;
     lastTick.current = 0;
+
+    // Counting the request here means one click is one `download_start`, whatever
+    // the route turns out to be and however the transfer then ends.
+    const beganAt = performance.now();
+    let fileFormat = formatOfExt(fmt.ext);
+    let conversionMs: number | undefined;
+    let serverWaitMs: number | undefined;
+    const request: DownloadInfo = {
+      fileFormat,
+      bitrate: fmt.kbps,
+      method: route,
+      kind: "single",
+    };
+    trackDownloadStart(request);
+
     setJob({
-      phase: fmt.kind === "wav-ffmpeg" ? "converting" : "downloading",
+      phase: route === "server" ? "converting" : "downloading",
       progress: 0,
       received: 0,
       total: null,
@@ -209,40 +168,57 @@ export function DownloadPanel({
       let filename: string | null = null;
 
       if (fmt.kind === "original") {
+        const sentAt = performance.now();
         const res = await fetch(`/api/public/track?id=${track.id}&mode=original`, {
           signal: controller.signal,
         });
-        if (!res.ok) throw new Error(await errorText(res));
+        if (!res.ok) throw await downloadFailure(res);
+        serverWaitMs = Math.round(performance.now() - sentAt);
         ext = res.headers.get("X-File-Ext") || ext;
+        fileFormat = formatOfExt(ext);
         mime =
           res.headers.get("Content-Type") ||
           (formats?.original.available ? formats.original.mime : null) ||
           "application/octet-stream";
         filename = filenameFromHeaders(res);
         data = await readResponse(res, onProgress, controller.signal);
-      } else if (fmt.kind === "wav-ffmpeg") {
-        const res = await fetch(`/api/public/track?id=${track.id}&mode=wav&q=${fmt.quality}`, {
+      } else if (route === "server") {
+        // FFmpeg writes the file on disk and the service deletes it as the last
+        // byte leaves, so the tab only ever holds the response it is saving.
+        const target =
+          fmt.kind === "mp3"
+            ? `mode=mp3&bitrate=${fmt.kbps}&q=${fmt.quality}`
+            : `mode=wav&q=${fmt.quality}`;
+        const sentAt = performance.now();
+        const res = await fetch(`/api/public/track?id=${track.id}&${target}`, {
           signal: controller.signal,
         });
-        if (!res.ok) throw new Error(await errorText(res));
-        ext = "wav";
-        mime = "audio/wav";
+        if (!res.ok) throw await downloadFailure(res);
+        // The service starts answering only when its file is ready to stream.
+        serverWaitMs = Math.round(performance.now() - sentAt);
+        ext = res.headers.get("X-File-Ext") || fmt.ext;
+        fileFormat = formatOfExt(ext);
+        mime = res.headers.get("Content-Type") || (fmt.kind === "mp3" ? "audio/mpeg" : "audio/wav");
         filename = filenameFromHeaders(res);
         data = await readResponse(res, onProgress, controller.signal);
       } else {
+        const sentAt = performance.now();
         const res = await fetch(`/api/public/track?id=${track.id}&q=${fmt.quality}`, {
           signal: controller.signal,
         });
-        if (!res.ok) throw new Error(await errorText(res));
+        if (!res.ok) throw await downloadFailure(res);
+        serverWaitMs = Math.round(performance.now() - sentAt);
         const sourceExt = res.headers.get("X-File-Ext") || "m4a";
         const raw = await readResponse(res, onProgress, controller.signal);
         data = raw;
         ext = sourceExt;
+        fileFormat = formatOfExt(sourceExt);
         mime = res.headers.get("Content-Type") ?? "audio/mp4";
 
-        if (fmt.kind === "mp3" || fmt.kind === "wav-browser") {
+        if (fmt.kind === "mp3") {
           setJob({ phase: "decoding", progress: null });
-          const target: Format = fmt.kind === "mp3" ? (`mp3-${fmt.kbps}` as Format) : "wav";
+          const target: Format = `mp3-${fmt.kbps}` as Format;
+          const convertAt = performance.now();
           const out = await convert(raw, sourceExt, target, (phase, progress) => {
             if (controller.signal.aborted) return;
             setJob({
@@ -250,8 +226,10 @@ export function DownloadPanel({
               progress: phase === "encode" ? progress : null,
             });
           });
+          conversionMs = Math.round(performance.now() - convertAt);
           data = out.data;
           ext = out.ext;
+          fileFormat = formatOfExt(out.ext);
           mime = out.mime;
           if (ext === "mp3") {
             setJob({ phase: "tagging", progress: null });
@@ -261,18 +239,38 @@ export function DownloadPanel({
         }
       }
 
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted) {
+        trackDownloadCancelled({ ...request, fileFormat });
+        return;
+      }
       setJob({ phase: "saving", progress: null });
       const fallback = `${safeName(`${track.artist} - ${track.title}`)}.${ext}`;
-      saveFile(data, withExtension(filename ?? fallback, ext), mime);
+      saveDownload(data as BlobPart, withExtension(filename ?? fallback, ext), mime);
+      // The file is finished and given to the browser here; nothing claims the
+      // device kept it, because no browser tells us.
+      trackDownloadComplete({
+        ...request,
+        fileFormat,
+        bytes: data.length,
+        elapsedMs: Math.round(performance.now() - beganAt),
+        conversionMs,
+        serverWaitMs,
+      });
       setJob({ phase: "done", progress: 1, received: data.length, total: data.length });
-      toast.success(`Saved ${track.title}`);
+      toast.success(`Download started: ${track.title}`);
     } catch (e) {
       if (controller.signal.aborted) {
+        trackDownloadCancelled({ ...request, fileFormat });
         setJob(null);
         return;
       }
-      const message = e instanceof Error ? e.message : "The download failed.";
+      const message = userError(e);
+      trackDownloadError({
+        ...request,
+        fileFormat,
+        errorType: classifyError(e),
+        elapsedMs: Math.round(performance.now() - beganAt),
+      });
       setJob({
         phase: "error",
         progress: null,
@@ -301,6 +299,18 @@ export function DownloadPanel({
   }, [autoStart, formatsLoading, allowed, start]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
+
+  // A track with nothing to offer is a result worth counting, and the notice that
+  // says so is rendered many times, so report it once per panel.
+  const reportedUnavailable = useRef(false);
+  useEffect(() => {
+    if (allowed || checking || reportedUnavailable.current) return;
+    reportedUnavailable.current = true;
+    trackAppError({
+      stage: "availability",
+      error: track.snippet ? "preview only" : "download not allowed",
+    });
+  }, [allowed, checking, track.snippet]);
 
   function cancel() {
     abortRef.current?.abort();
@@ -362,7 +372,7 @@ export function DownloadPanel({
             <ShieldAlert className="h-4 w-4 text-primary" aria-hidden />
             {track.snippet ? "Only a preview is available" : "Download isn't available"}
           </p>
-          <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+          <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
             {track.snippet
               ? "SoundCloud serves a 30-second snippet for this track. Downloading the full track isn't authorized."
               : "SoundCloud doesn't authorize a download for this track, and no original upload is exposed."}{" "}
@@ -372,7 +382,10 @@ export function DownloadPanel({
             href={track.permalink_url}
             target="_blank"
             rel="noreferrer"
-            className="mt-3 inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-xs font-semibold text-foreground transition hover:border-primary/50 hover:text-primary"
+            onClick={() =>
+              trackExternalLink({ href: track.permalink_url, label: "open_on_soundcloud" })
+            }
+            className="mt-3 inline-flex h-11 items-center gap-2 rounded-full border border-border px-4 text-sm font-semibold text-foreground transition hover:border-primary/50 hover:text-primary"
           >
             Open on SoundCloud
           </a>
@@ -405,6 +418,11 @@ export function DownloadPanel({
                       onChange={() => {
                         setSelected(entry.value);
                         setJob(null);
+                        trackFormatSelected({
+                          fileFormat: formatOfExt(entry.ext),
+                          bitrate: entry.kbps,
+                          page: "track",
+                        });
                       }}
                       className="mt-0.5 h-4 w-4 shrink-0 accent-primary disabled:cursor-not-allowed"
                     />
@@ -427,20 +445,24 @@ export function DownloadPanel({
             onClick={() => void start()}
             disabled={busy || !option}
             className={cn(
-              "mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5",
-              "text-sm font-bold text-primary-foreground shadow-lg shadow-primary/25 transition",
+              "mt-4 flex w-full flex-col items-center justify-center gap-0.5 rounded-full bg-primary px-5 py-2.5",
+              "font-bold text-primary-foreground shadow-lg shadow-primary/25 transition",
               "hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
             )}
           >
-            {busy ? (
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-            ) : (
-              <Download className="h-4 w-4" aria-hidden />
-            )}
-            {busy ? "Preparing…" : finished ? "Download again" : `Download ${label}`}
-            {!busy && !finished && size !== "—" && (
-              <span className="font-normal opacity-80">· {size}</span>
+            <span className="inline-flex items-center gap-2 text-sm">
+              {busy ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              ) : (
+                <Download className="h-4 w-4" aria-hidden />
+              )}
+              {busy ? "Preparing…" : finished ? "Download again" : `Download ${label}`}
+            </span>
+            {size !== "—" && (
+              <span className="text-xs font-medium tabular-nums text-primary-foreground">
+                {size}
+              </span>
             )}
           </button>
 
@@ -494,7 +516,14 @@ export function DownloadPanel({
                   </div>
 
                   {!failed && (
-                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-secondary">
+                    <div
+                      role="progressbar"
+                      aria-label={PHASE_LABEL[job.phase as Exclude<Phase, "error">]}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={pct ?? undefined}
+                      className="mt-2 h-1.5 overflow-hidden rounded-full bg-secondary"
+                    >
                       <div
                         className={cn(
                           "h-full rounded-full bg-primary transition-[width] duration-200",
@@ -514,11 +543,11 @@ export function DownloadPanel({
                     {failed
                       ? job.error
                       : finished
-                        ? `${label} · ${formatBytes(job.received ?? 0)} saved.`
+                        ? `${label} · ${formatBytes(job.received ?? 0)} ready to save.`
                         : downloading
                           ? `${formatBytes(job.received ?? 0)}${job.total ? ` of ≈ ${formatBytes(job.total)}` : ""} downloaded`
                           : job.phase === "converting"
-                            ? "FFmpeg is converting the authorized stream to WAV — this can take a moment."
+                            ? `FFmpeg is converting the stream to ${label} on the server — this can take a moment.`
                             : job.phase === "encoding" && pct !== null
                               ? `Encoding ${label} · ${pct}%`
                               : `${label} · working…`}
@@ -529,25 +558,25 @@ export function DownloadPanel({
                       <button
                         type="button"
                         onClick={() => void start()}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground transition hover:brightness-110"
+                        className="inline-flex h-11 items-center gap-1.5 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110"
                       >
-                        <RotateCcw className="h-3.5 w-3.5" aria-hidden /> Retry download
+                        <RotateCcw className="h-4 w-4" aria-hidden /> Retry download
                       </button>
                     )}
                     {busy && (
                       <button
                         type="button"
                         onClick={cancel}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-xs font-semibold text-muted-foreground transition hover:bg-accent hover:text-foreground"
+                        className="inline-flex h-11 items-center gap-1.5 rounded-full border border-border px-4 text-sm font-semibold text-muted-foreground transition hover:bg-accent hover:text-foreground"
                       >
-                        <X className="h-3.5 w-3.5" aria-hidden /> Cancel
+                        <X className="h-4 w-4" aria-hidden /> Cancel
                       </button>
                     )}
                     {(finished || failed) && (
                       <button
                         type="button"
                         onClick={() => setJob(null)}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-xs font-semibold text-muted-foreground transition hover:bg-accent hover:text-foreground"
+                        className="inline-flex h-11 items-center gap-1.5 rounded-full border border-border px-4 text-sm font-semibold text-muted-foreground transition hover:bg-accent hover:text-foreground"
                       >
                         Dismiss
                       </button>

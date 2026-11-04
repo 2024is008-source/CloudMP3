@@ -10,6 +10,7 @@ import {
   Tag,
 } from "lucide-react";
 
+import { trackCtaClicked, trackExternalLink } from "@/lib/analytics";
 import { CATEGORY_LABELS, formatDuration } from "@/lib/search-rank";
 import type { TrackDetails } from "@/lib/soundcloud.server";
 
@@ -65,9 +66,11 @@ export function TrackHero({ track }: { track: TrackDetails }) {
 
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-foreground">
-              {CATEGORY_LABELS[track.category]}
-            </span>
+            {track.category !== "original" && (
+              <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-foreground">
+                {CATEGORY_LABELS[track.category]}
+              </span>
+            )}
             {track.official && (
               <span
                 title="Official release metadata provided by SoundCloud"
@@ -87,45 +90,54 @@ export function TrackHero({ track }: { track: TrackDetails }) {
             {track.title}
           </h1>
 
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            {track.artist_avatar && (
-              <img
-                src={track.artist_avatar}
-                alt=""
-                className="h-6 w-6 rounded-full border border-border object-cover"
-              />
+          <div className="mt-3 text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-2">
+              {track.artist_avatar && (
+                <img
+                  src={track.artist_avatar}
+                  alt=""
+                  className="h-6 w-6 rounded-full border border-border object-cover"
+                />
+              )}
+              <span>by</span>
+              {track.artist_url ? (
+                <a
+                  href={track.artist_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => {
+                    if (track.artist_url) {
+                      trackExternalLink({ href: track.artist_url, label: "artist_profile" });
+                    }
+                  }}
+                  className="inline-flex items-center gap-1 font-semibold text-foreground underline-offset-4 transition hover:text-primary hover:underline"
+                >
+                  {track.artist}
+                  {track.verified && (
+                    <BadgeCheck
+                      className="h-4 w-4 text-primary"
+                      aria-label="Verified SoundCloud artist"
+                    />
+                  )}
+                </a>
+              ) : (
+                <span className="inline-flex items-center gap-1 font-semibold text-foreground">
+                  {track.artist}
+                  {track.verified && (
+                    <BadgeCheck
+                      className="h-4 w-4 text-primary"
+                      aria-label="Verified SoundCloud artist"
+                    />
+                  )}
+                </span>
+              )}
+            </div>
+            {track.uploader !== track.artist && (
+              <p className="mt-1.5">Uploaded by {track.uploader}</p>
             )}
-            <span>by</span>
-            {track.artist_url ? (
-              <a
-                href={track.artist_url}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 font-semibold text-foreground underline-offset-4 transition hover:text-primary hover:underline"
-              >
-                {track.artist}
-                {track.verified && (
-                  <BadgeCheck
-                    className="h-4 w-4 text-primary"
-                    aria-label="Verified SoundCloud artist"
-                  />
-                )}
-              </a>
-            ) : (
-              <span className="inline-flex items-center gap-1 font-semibold text-foreground">
-                {track.artist}
-                {track.verified && (
-                  <BadgeCheck
-                    className="h-4 w-4 text-primary"
-                    aria-label="Verified SoundCloud artist"
-                  />
-                )}
-              </span>
-            )}
-            {track.uploader !== track.artist && <span>· uploaded by {track.uploader}</span>}
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+          <div className="mt-4 flex flex-col gap-1.5 text-sm text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-5 sm:gap-y-2">
             <span className="inline-flex items-center gap-1.5">
               <Clock className="h-4 w-4 text-primary" aria-hidden />
               {duration}
@@ -154,21 +166,28 @@ export function TrackHero({ track }: { track: TrackDetails }) {
             <p className="mt-2 text-xs text-muted-foreground">Uploaded {localDate}</p>
           )}
 
-          <div className="mt-6 flex flex-wrap items-center gap-2">
+          <div className="mt-6 grid auto-cols-[minmax(0,max-content)] grid-flow-col justify-start gap-2">
             <a
               href="#download"
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              onClick={() => trackCtaClicked({ label: "download_panel", page: "track" })}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:px-5"
             >
               <Download className="h-4 w-4" aria-hidden />
-              {track.downloadAllowed ? "Download" : "Download availability"}
+              Download
             </a>
             <a
               href={track.permalink_url}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/40 px-5 py-2.5 text-sm font-semibold text-foreground transition hover:border-primary/50 hover:text-primary"
+              onClick={() =>
+                trackExternalLink({ href: track.permalink_url, label: "listen_on_soundcloud" })
+              }
+              className="inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-border bg-secondary/40 px-4 text-sm font-semibold text-foreground transition hover:border-primary/50 hover:text-primary sm:px-5"
             >
-              <ExternalLink className="h-4 w-4" aria-hidden /> Listen on SoundCloud
+              <ExternalLink className="h-4 w-4" aria-hidden />
+              {/* The full label does not share a row with Download on a phone. */}
+              <span className="sm:hidden">SoundCloud</span>
+              <span className="hidden sm:inline">Listen on SoundCloud</span>
             </a>
           </div>
         </div>

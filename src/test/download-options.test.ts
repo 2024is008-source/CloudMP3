@@ -57,6 +57,7 @@ function makeFormats(original: OriginalInfo, wav = true): TrackFormats {
       { preset: "aac_96k", codec: "AAC", ext: "m4a", bitrate: 96, protocol: "hls" },
     ],
     wavConversion: { available: wav, source: null },
+    mp3Conversion: { available: wav, bitrates: [128, 192, 256, 320], source: null },
     account: { configured: true },
   };
 }
@@ -117,20 +118,18 @@ describe("download options", () => {
     }
   });
 
-  it("offers one plain WAV entry whose pipeline depends on FFmpeg availability", () => {
+  it("offers one plain WAV entry, whichever pipeline is configured", () => {
     const ffmpeg = buildDownloadOptions(makeTrack(), makeFormats(unavailable, true));
     const browser = buildDownloadOptions(makeTrack(), makeFormats(unavailable, false));
 
-    const ffmpegWav = ffmpeg.filter((option) => option.kind === "wav-ffmpeg");
-    expect(ffmpegWav).toHaveLength(1);
-    expect(ffmpegWav[0]!.label).toBe("WAV");
-
-    const browserWav = browser.filter((option) => option.kind === "wav-browser");
-    expect(browserWav).toHaveLength(1);
-    expect(browserWav[0]!.label).toBe("WAV");
-
-    expect(ffmpeg.filter((option) => option.ext === "wav")).toHaveLength(1);
-    expect(browser.filter((option) => option.ext === "wav")).toHaveLength(1);
+    // WAV is FFmpeg's job and there is no second implementation for when it is
+    // missing, so the option says the same thing either way.
+    for (const options of [ffmpeg, browser]) {
+      const wav = options.filter((option) => option.kind === "wav");
+      expect(wav).toHaveLength(1);
+      expect(wav[0]!.label).toBe("WAV");
+      expect(options.filter((option) => option.ext === "wav")).toHaveLength(1);
+    }
   });
 
   it("lists the MP3 conversion bitrates without extra labels", () => {

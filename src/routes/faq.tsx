@@ -2,7 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Archive, Globe2, Headphones, SlidersHorizontal } from "lucide-react";
 
 import { PageHero } from "@/components/Page";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { trackFaqOpened } from "@/lib/analytics";
 import { SITE } from "@/lib/site";
 import { seoHead } from "@/lib/seo";
 
@@ -36,12 +42,12 @@ const FEATURES = [
   {
     icon: Archive,
     title: "Full playlist ZIP support",
-    body: "Point it at an album or playlist and every track is collected into one ZIP archive, numbered in playlist order.",
+    body: "Point it at an album or playlist and its tracks are collected into one ZIP archive, numbered in playlist order, up to this server's archive limit.",
   },
   {
     icon: Headphones,
     title: "High-quality audio",
-    body: "You get the best audio SoundCloud still serves publicly — original AAC at up to 160kbps, or MP3 and WAV converted from that same stream in your browser.",
+    body: "You get the best audio SoundCloud still serves publicly — original AAC at up to 160kbps, or MP3 and WAV converted from that same stream.",
   },
   {
     icon: SlidersHorizontal,
@@ -58,7 +64,7 @@ const FEATURES = [
 const FAQS = [
   {
     q: "Why do some playlists take longer to download?",
-    a: "Tracks are fetched several at a time and then packed into the archive. Long lists, and MP3 or WAV conversion (done in your browser), take longer, so the progress line counts up as each track finishes.",
+    a: "Tracks are fetched several at a time and then packed into the archive. Long lists, and MP3 or WAV conversion, take longer, so the progress line counts up as each track finishes.",
   },
   {
     q: "Can I download SoundCloud Go+ (premium) tracks?",
@@ -74,7 +80,7 @@ const FAQS = [
   },
   {
     q: "Do you keep copies of what I download?",
-    a: "No. Audio is streamed straight through to your browser and nothing is written to disk on our side — see the Privacy Policy for the full wording.",
+    a: "No. A conversion or an archive is assembled in a temporary folder on the server and deleted as soon as your download ends or you leave the page — see the Privacy Policy for the full wording.",
   },
 ];
 
@@ -100,11 +106,22 @@ function Faq() {
 
         <div className="mx-auto mt-14 max-w-3xl">
           <h2 className="text-2xl font-bold tracking-tight">Frequently asked questions</h2>
-          <Accordion type="single" collapsible className="mt-5">
+          <Accordion
+            type="single"
+            collapsible
+            className="mt-5"
+            onValueChange={(value) => {
+              if (!value) return;
+              const index = Number(value.slice("item-".length));
+              if (Number.isInteger(index)) trackFaqOpened({ page: "faq", index });
+            }}
+          >
             {FAQS.map((f, i) => (
               <AccordionItem key={f.q} value={`item-${i}`}>
                 <AccordionTrigger className="text-left text-sm font-medium">{f.q}</AccordionTrigger>
-                <AccordionContent className="text-sm leading-relaxed text-muted-foreground">{f.a}</AccordionContent>
+                <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
+                  {f.a}
+                </AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>

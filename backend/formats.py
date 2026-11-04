@@ -10,10 +10,8 @@ import httpx
 
 from config import Settings
 from errors import ServiceError
+from net_guard import inspect_media_url, media_client
 from sc_api import ApiTrack
-
-# SoundCloud serves streams and original uploads from these hosts.
-SOURCE_HOSTS = ("sndcdn.com", "soundcloud.com", "soundcloud.cloud")
 
 EXT_CODEC = {
     "wav": "PCM (WAV)",
@@ -47,6 +45,8 @@ MIME_EXT = {
 
 ORIGINAL_WARNING = "registered users"
 INVALID_NAME = re.compile(r'[\\/:*?"<>|\x00-\x1f]')
+# MP3 bitrates the service will transcode to; the router and FFmpeg share this list.
+MP3_BITRATES = (128, 192, 256, 320)
 # SoundCloud preset names carry the real bitrate even when yt-dlp's abr is missing.
 PRESET_BITRATES = {
     "mp3_1_0": 128,
@@ -85,16 +85,14 @@ def ext_from_url(url: str | None) -> str | None:
 
 
 def is_allowed_source(url: Any) -> bool:
-    if not isinstance(url, str):
-        return False
-    try:
-        parsed = urlparse(url)
-    except ValueError:
-        return False
-    if parsed.scheme != "https":
-        return False
-    host = (parsed.hostname or "").lower()
-    return any(host == allowed or host.endswith("." + allowed) for allowed in SOURCE_HOSTS)
+    """Whether this URL may be contacted at all.
+
+    The policy lives in ``net_guard``; this name stays because the audio code and
+    its tests already speak it. It is the shape check only — a client built by
+    ``net_guard.media_client`` re-checks the shape and the resolved address on
+    every hop, so passing this is not what makes a fetch safe.
+    """
+    return inspect_media_url(url) is None
 
 
 def filename_from_disposition(value: str | None) -> str | None:
@@ -213,6 +211,9 @@ class TrackFormats:
     flags: dict[str, Any] = field(default_factory=dict)
     account_configured: bool = False
     ffmpeg_available: bool = False
+    # Tag values the source reports, kept server-side for ID3 writing only.
+    album: str | None = None
+    artwork_url: str | None = None
 
     def select_stream(self, quality: str) -> StreamFormat | None:
         if not self.streams:
@@ -250,6 +251,13 @@ class TrackFormats:
                     self.select_stream("high").to_public() if self.streams else None
                 ),
             },
+            "mp3Conversion": {
+                "available": bool(self.streams) and self.ffmpeg_available,
+                "bitrates": list(MP3_BITRATES),
+                "source": (
+                    self.select_stream("high").to_public() if self.streams else None
+                ),
+            },
             "flags": self.flags,
             "account": {"configured": self.account_configured},
         }
@@ -276,6 +284,26 @@ def _is_original_format(fmt: dict[str, Any]) -> bool:
     format_id = str(fmt.get("format_id") or "").lower()
     note = str(fmt.get("format_note") or "").lower()
     return format_id == "download" or note.startswith("original")
+
+
+def _text(value: Any) -> str | None:
+    text = value.strip() if isinstance(value, str) else ""
+    return text or None
+
+
+def _artwork(info: dict[str, Any]) -> str | None:
+    """The largest cover SoundCloud itself serves, or None.
+
+    yt-dlp lists thumbnails smallest-first, so the last usable entry wins.
+    """
+    thumbnails = info.get("thumbnails")
+    candidates = list(reversed(thumbnails)) if isinstance(thumbnails, list) else []
+    candidates.append({"url": info.get("thumbnail")})
+    for candidate in candidates:
+        url = candidate.get("url") if isinstance(candidate, dict) else None
+        if is_allowed_source(url):
+            return url
+    return None
 
 
 def _extract_sync(permalink: str, token: str | None, user_agent: str) -> tuple[dict, list[str]]:
@@ -354,6 +382,8 @@ class FormatService:
             },
             account_configured=account_configured,
             ffmpeg_available=ffmpeg_available,
+            album=_text(info.get("album")),
+            artwork_url=_artwork(info),
         )
 
     async def _run_extract(self, permalink: str, token: str | None) -> tuple[dict, list[str]]:
@@ -490,9 +520,7 @@ class FormatService:
     async def _head(self, url: str) -> dict[str, str]:
         headers = {"User-Agent": self._settings.user_agent}
         try:
-            async with httpx.AsyncClient(
-                timeout=20.0, follow_redirects=True, headers=headers
-            ) as client:
+            async with media_client(20.0, headers=headers) as client:
                 response = await client.head(url)
                 if response.status_code < 400 and response.status_code not in (405, 501):
                     if _clean_mime(response.headers.get("content-type")) == "text/html":

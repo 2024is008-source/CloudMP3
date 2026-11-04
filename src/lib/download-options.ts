@@ -3,7 +3,7 @@ import type { StreamInfo, TrackFormats } from "./track-formats";
 
 export const WAV_KBPS = 1411;
 
-export type OptionKind = "original" | "stream" | "mp3" | "wav-browser" | "wav-ffmpeg";
+export type OptionKind = "original" | "stream" | "mp3" | "wav";
 
 export type DownloadOption = {
   value: string;
@@ -94,7 +94,7 @@ export function buildDownloadOptions(
       label: "WAV",
       kbps: WAV_KBPS,
       bytes: null,
-      kind: formats?.wavConversion.available ? "wav-ffmpeg" : "wav-browser",
+      kind: "wav",
       quality: "high",
       ext: "wav",
     });

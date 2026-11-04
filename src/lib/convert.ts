@@ -8,7 +8,7 @@ export const FORMATS: { value: Format; label: string }[] = [
   { value: "mp3-256", label: "MP3 · 256kbps" },
   { value: "mp3-192", label: "MP3 · 192kbps" },
   { value: "mp3-128", label: "MP3 · 128kbps" },
-  { value: "wav", label: "WAV · 16-bit lossless" },
+  { value: "wav", label: "WAV · 16-bit PCM" },
 ];
 
 async function decode(data: Uint8Array): Promise<AudioBuffer> {

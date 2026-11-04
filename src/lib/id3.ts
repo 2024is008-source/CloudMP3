@@ -1,4 +1,6 @@
 // Minimal ID3v2.3 writer: title, artist, album, track number and front cover art.
+import { isAllowedMediaUrl } from "./url-guard";
+
 export type Id3Meta = {
   title: string;
   artist: string;
@@ -53,7 +55,12 @@ export function buildId3(meta: Id3Meta): Uint8Array {
   if (meta.cover) {
     const mime = new TextEncoder().encode(meta.cover.mime);
     // encoding(0) mime\0 type(3=front cover) description\0 data
-    frames.push(frame("APIC", concat([new Uint8Array([0]), mime, new Uint8Array([0, 3, 0]), meta.cover.data])));
+    frames.push(
+      frame(
+        "APIC",
+        concat([new Uint8Array([0]), mime, new Uint8Array([0, 3, 0]), meta.cover.data]),
+      ),
+    );
   }
   const body = concat(frames);
   const h = new Uint8Array(10);
@@ -69,11 +76,16 @@ export function buildId3(meta: Id3Meta): Uint8Array {
 export const tagMp3 = (mp3: Uint8Array, meta: Id3Meta) => concat([buildId3(meta), mp3]);
 
 export async function fetchCover(url: string | null): Promise<Id3Meta["cover"]> {
-  if (!url) return undefined;
+  // This runs in the visitor's browser, where a redirect cannot be re-read before
+  // it is followed, so the one gate is the address the artwork is asked for at.
+  if (!url || !isAllowedMediaUrl(url)) return undefined;
   try {
     const r = await fetch(url.replace("-large.", "-t500x500."));
     if (!r.ok) return undefined;
-    return { data: new Uint8Array(await r.arrayBuffer()), mime: r.headers.get("Content-Type") ?? "image/jpeg" };
+    return {
+      data: new Uint8Array(await r.arrayBuffer()),
+      mime: r.headers.get("Content-Type") ?? "image/jpeg",
+    };
   } catch {
     return undefined;
   }

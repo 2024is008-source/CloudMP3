@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { SearchResultRow, SearchResultSkeleton } from "@/components/SearchResultRow";
 import { SearchTabs } from "@/components/SearchTabs";
+import { trackAppError, trackResultOpened, trackSearch } from "@/lib/analytics";
 import { searchSoundcloud } from "@/lib/sc.functions";
 import { setSelection } from "@/lib/selection";
 import { SEARCH_TABS, type SearchResult, type SearchTab } from "@/lib/search-rank";
@@ -66,6 +67,9 @@ function SearchPage() {
   const [error, setError] = useState<string | null>(null);
   const reqRef = useRef(0);
   const keyRef = useRef(`${q}|${tab}`);
+  // A failing service repeats on every typing pause, so a run of failures is
+  // reported once and cleared by the first page that comes back.
+  const failureReported = useRef(false);
 
   const term = q.trim();
   const canSearch = term.length >= 2;
@@ -88,6 +92,11 @@ function SearchPage() {
   }, [input, q, tab, navigate]);
 
   const runSearch = useCallback(async (query: string, searchTab: SearchTab) => {
+    const reportFailure = (cause: unknown) => {
+      if (failureReported.current) return;
+      failureReported.current = true;
+      trackAppError({ stage: "search", error: cause });
+    };
     const reqId = ++reqRef.current;
     const key = `${query}|${searchTab}`;
     keyRef.current = key;
@@ -100,14 +109,17 @@ function SearchPage() {
       });
       if (reqId !== reqRef.current) return;
       if (!page.ok) {
+        reportFailure(page.error);
         setError(page.error);
         return;
       }
+      failureReported.current = false;
       setResults(page.results);
       setNextOffset(page.nextOffset);
       setHasMore(page.hasMore);
-    } catch {
+    } catch (e) {
       if (reqId !== reqRef.current) return;
+      reportFailure(e);
       setError("Search is unavailable right now. Check your connection and try again.");
     } finally {
       if (reqId === reqRef.current) {
@@ -156,6 +168,7 @@ function SearchPage() {
   }
 
   function changeTab(next: SearchTab) {
+    if (next !== tab) trackSearch({ source: "search_page", tab: next, term });
     void navigate({ to: "/search", search: { q, tab: next }, replace: true });
   }
 
@@ -163,10 +176,12 @@ function SearchPage() {
     e.preventDefault();
     const value = input.trim();
     if (value.length < 2) return;
+    trackSearch({ source: "search_page", tab, term: value });
     void navigate({ to: "/search", search: { q: value, tab }, replace: true });
   }
 
   function openItem(item: SearchResult) {
+    trackResultOpened({ kind: item.kind, from: "search_page" });
     if (item.kind === "track") {
       void navigate({ to: "/track/$id", params: { id: String(item.id) }, search: {} });
       return;
@@ -176,6 +191,7 @@ function SearchPage() {
   }
 
   function downloadItem(item: SearchResult) {
+    trackResultOpened({ kind: item.kind, from: "search_page" });
     if (item.kind === "track") {
       void navigate({
         to: "/track/$id",

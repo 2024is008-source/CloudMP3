@@ -145,11 +145,20 @@
   }
 
   /* Headings break evenly instead of leaving a two-word orphan; paragraphs
-     avoid single trailing words. */
+     avoid single trailing words. In a phone column that even split leaves both
+     edges ragged, so h2 titles wrap greedily and fill the text block up to 30rem,
+     where greedy no longer strands a stub line. */
   h1,
-  h2,
   h3 {
     text-wrap: balance;
+  }
+  h2 {
+    text-wrap: normal;
+  }
+  @media (width >= 30rem) {
+    h2 {
+      text-wrap: balance;
+    }
   }
   p {
     text-wrap: pretty;
@@ -310,6 +319,40 @@
   cursor: pointer;
 }
 .range-brand:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 30%, transparent);
+}
+
+/* Secondary slider: volume must not read as a second seek bar. */
+.range-quiet {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    color-mix(in oklab, var(--foreground) 60%, transparent) var(--range-progress, 0%),
+    color-mix(in oklab, var(--foreground) 18%, transparent) var(--range-progress, 0%)
+  );
+  outline: none;
+}
+.range-quiet::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 12px;
+  width: 12px;
+  border-radius: 9999px;
+  background: color-mix(in oklab, var(--foreground) 85%, transparent);
+  cursor: pointer;
+}
+.range-quiet::-moz-range-thumb {
+  height: 12px;
+  width: 12px;
+  border: none;
+  border-radius: 9999px;
+  background: color-mix(in oklab, var(--foreground) 85%, transparent);
+  cursor: pointer;
+}
+.range-quiet:focus-visible {
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 30%, transparent);
 }
 

@@ -1,18 +1,35 @@
 // Mirrors scdl's approach: scrape a public client_id, then use api-v2.
+import { assertSafeMediaUrl, guardedFetch } from "./url-guard.server";
+import { inspectPageUrl } from "./url-guard";
+
 let cachedId: { id: string; at: number } | null = null;
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36";
 
+/**
+ * Deadline for the calls that read a small body at once. A hung metadata request
+ * would hold a socket open on this single-process server indefinitely and leave
+ * the visitor's spinner turning forever. Downloads are not covered: a stream in
+ * progress is not a hung request, so `hlsStream` and the segment readers keep
+ * their own no-timeout fetch.
+ */
+const CALL_TIMEOUT_MS = 20_000;
+
+function call(input: string | URL, headers: Record<string, string> = {}): Promise<Response> {
+  return guardedFetch(input.toString(), {
+    headers: { "User-Agent": UA, ...headers },
+    signal: AbortSignal.timeout(CALL_TIMEOUT_MS),
+  });
+}
+
 export async function getClientId(force = false): Promise<string> {
   if (!force && cachedId && Date.now() - cachedId.at < 30 * 60_000) return cachedId.id;
-  const html = await (
-    await fetch("https://soundcloud.com/", { headers: { "User-Agent": UA } })
-  ).text();
+  const html = await (await call("https://soundcloud.com/")).text();
   const scripts = [...html.matchAll(/<script crossorigin src="([^"]+)"/g)]
     .map((m) => m[1]!)
     .reverse();
   for (const src of scripts) {
-    const js = await (await fetch(src, { headers: { "User-Agent": UA } })).text();
+    const js = await (await call(src)).text();
     const m = js.match(/client_id\s*[:=]\s*"([a-zA-Z0-9]{32})"/);
     if (m) {
       cachedId = { id: m[1]!, at: Date.now() };
@@ -22,13 +39,27 @@ export async function getClientId(force = false): Promise<string> {
   throw new Error("Could not obtain SoundCloud client id");
 }
 
+/**
+ * SoundCloud's own hosts only. `scApi` also takes absolute links handed back by
+ * a previous response (`next_href`, `api_url`), and an unbounded follow of those
+ * would let a crafted reply point the VPS at its own network. The page rule is the
+ * strictest one in `url-guard.server.ts`: an API answer never has a reason to
+ * name a CDN as the place to ask a question.
+ */
+function isSoundCloudEndpoint(url: string): boolean {
+  return inspectPageUrl(url) === null;
+}
+
 export async function scApi(path: string, params: Record<string, string> = {}): Promise<any> {
   for (let attempt = 0; attempt < 2; attempt++) {
     const id = await getClientId(attempt > 0);
     const u = new URL(path.startsWith("http") ? path : `https://api-v2.soundcloud.com${path}`);
+    if (!isSoundCloudEndpoint(u.toString())) {
+      throw new Error("Only SoundCloud endpoints can be queried");
+    }
     for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
     u.searchParams.set("client_id", id);
-    const r = await fetch(u, { headers: { "User-Agent": UA } });
+    const r = await call(u);
     if (r.status === 401 || r.status === 403) continue;
     if (!r.ok) throw new Error(`SoundCloud responded ${r.status}`);
     return r.json();
@@ -555,7 +586,7 @@ export async function getPreviewAudio(trackId: number): Promise<PreviewAudio> {
       const data =
         tc.format.protocol === "hls"
           ? await hlsBytes(url)
-          : new Uint8Array(await (await fetch(url)).arrayBuffer());
+          : new Uint8Array(await (await guardedFetch(url)).arrayBuffer());
       if (data.byteLength === 0) continue;
       const entry: PreviewAudio = { data, mime: variant.mime.split(";")[0]!, snippet };
       cachePreview(trackId, entry);
@@ -628,27 +659,62 @@ export async function findRelatedTracks(current: {
   return { more, versions, similar, playlists };
 }
 
-async function hlsParts(m3u8: string): Promise<string[]> {
-  const text = await (await fetch(m3u8)).text();
-  if (text.includes("#EXT-X-KEY") && !text.includes("METHOD=NONE"))
-    throw new Error("This track is DRM-protected");
-  const urls: string[] = [];
+const PLAYLIST_MAX_DEPTH = 3;
+const PLAYLIST_MAX_SEGMENTS = 10_000;
+
+/** A playlist line is either another playlist or one media segment. */
+function isPlaylistUrl(url: URL): boolean {
+  return /\.m3u8?$/i.test(url.pathname);
+}
+
+function playlistReferences(text: string): string[] {
+  const refs: string[] = [];
   const init = text.match(/#EXT-X-MAP:URI="([^"]+)"/);
-  if (init) urls.push(new URL(init[1]!, m3u8).toString());
-  for (const l of text.split("\n").map((x) => x.trim()))
-    if (l && !l.startsWith("#")) urls.push(new URL(l, m3u8).toString());
-  return urls;
+  if (init) refs.push(init[1]!);
+  for (const line of text.split("\n")) {
+    const entry = line.trim();
+    if (entry && !entry.startsWith("#")) refs.push(entry);
+  }
+  return refs;
+}
+
+/**
+ * Every media address in a playlist tree, each gated before it is fetched.
+ *
+ * Nested playlists are expanded here rather than returned as one address to read
+ * later, so nothing downstream can follow a reference that never passed the
+ * outbound policy. References resolve against the playlist that named them, which
+ * is exactly where a new origin could otherwise be smuggled in.
+ */
+async function collectSegments(url: string, depth = 0): Promise<string[]> {
+  if (depth >= PLAYLIST_MAX_DEPTH) throw new Error("This stream's playlist nests too deeply");
+  const text = await (await call(url)).text();
+  if (text.includes("#EXT-X-KEY") && !text.includes("METHOD=NONE")) {
+    throw new Error("This track is DRM-protected");
+  }
+  const segments: string[] = [];
+  for (const reference of playlistReferences(text)) {
+    const target = await assertSafeMediaUrl(new URL(reference, url).toString());
+    if (isPlaylistUrl(new URL(target))) {
+      segments.push(...(await collectSegments(target, depth + 1)));
+    } else {
+      segments.push(target);
+    }
+    if (segments.length > PLAYLIST_MAX_SEGMENTS)
+      throw new Error("This stream has too many segments");
+  }
+  return segments;
 }
 
 /** Fully buffer an HLS playlist (init segment + media segments) into one file. */
 async function hlsBytes(m3u8: string): Promise<Uint8Array> {
-  const urls = await hlsParts(m3u8);
+  const urls = await collectSegments(m3u8);
   const parts: Uint8Array[] = new Array(urls.length);
   let next = 0;
   const worker = async () => {
     while (next < urls.length) {
       const i = next++;
-      const r = await fetch(urls[i]!);
+      const r = await guardedFetch(urls[i]!);
       if (!r.ok) throw new Error("segment failed");
       parts[i] = new Uint8Array(await r.arrayBuffer());
     }
@@ -667,11 +733,11 @@ async function hlsBytes(m3u8: string): Promise<Uint8Array> {
 
 /** Join an HLS playlist (init segment + media segments) into one file stream. */
 export async function hlsStream(m3u8: string): Promise<ReadableStream<Uint8Array>> {
-  const urls = await hlsParts(m3u8);
+  const urls = await collectSegments(m3u8);
   // Fetch segments in parallel (sliding window) while preserving order.
   const WINDOW = 8;
   const get = async (u: string, tries = 2): Promise<Uint8Array> => {
-    const r = await fetch(u);
+    const r = await guardedFetch(u);
     if (!r.ok) {
       if (tries > 0) return get(u, tries - 1);
       throw new Error("segment failed");

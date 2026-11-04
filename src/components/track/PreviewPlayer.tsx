@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Headphones, Loader2, Pause, Play, RotateCcw, Volume2, VolumeX } from "lucide-react";
 
+import { trackExternalLink } from "@/lib/analytics";
 import { formatDuration } from "@/lib/search-rank";
 import type { TrackDetails } from "@/lib/soundcloud.server";
 import { cn } from "@/lib/utils";
@@ -114,7 +115,10 @@ export function PreviewPlayer({ track }: { track: TrackDetails }) {
             href={track.permalink_url}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex w-fit items-center gap-2 rounded-full border border-border px-4 py-2 text-xs font-semibold text-foreground transition hover:border-primary/50 hover:text-primary"
+            onClick={() =>
+              trackExternalLink({ href: track.permalink_url, label: "listen_on_soundcloud" })
+            }
+            className="inline-flex h-11 w-fit items-center justify-center gap-2 rounded-full border border-border px-4 text-sm font-semibold text-foreground transition hover:border-primary/50 hover:text-primary"
           >
             Listen on SoundCloud
           </a>
@@ -210,7 +214,7 @@ export function PreviewPlayer({ track }: { track: TrackDetails }) {
             type="button"
             onClick={toggleMute}
             aria-label={muted ? "Unmute preview" : "Mute preview"}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-accent hover:text-foreground"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground transition hover:bg-accent hover:text-foreground"
           >
             {muted || volume === 0 ? (
               <VolumeX className="h-4 w-4" aria-hidden />
@@ -226,7 +230,7 @@ export function PreviewPlayer({ track }: { track: TrackDetails }) {
             value={volumeValue}
             onChange={(e) => changeVolume(Number(e.target.value))}
             aria-label="Preview volume"
-            className="range-brand w-24 cursor-pointer"
+            className="range-quiet w-20 cursor-pointer"
             style={{ ["--range-progress" as string]: `${volumeValue * 100}%` }}
           />
         </div>
@@ -237,13 +241,13 @@ export function PreviewPlayer({ track }: { track: TrackDetails }) {
           role="alert"
           className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-destructive/40 bg-destructive/5 px-3 py-2.5"
         >
-          <p className="text-xs text-destructive">{error}</p>
+          <p className="text-sm text-destructive">{error}</p>
           <button
             type="button"
             onClick={retry}
-            className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-semibold transition hover:bg-accent"
+            className="ml-auto inline-flex h-11 items-center gap-1.5 rounded-full border border-border px-4 text-sm font-semibold transition hover:bg-accent"
           >
-            <RotateCcw className="h-3.5 w-3.5" aria-hidden /> Retry
+            <RotateCcw className="h-4 w-4" aria-hidden /> Retry
           </button>
         </div>
       )}

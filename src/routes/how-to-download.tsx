@@ -57,7 +57,7 @@ const DESKTOP = [
   {
     icon: FolderArchive,
     title: "Save the file or the whole ZIP",
-    body: "Hit the download arrow next to one track for a single file, or use Download ZIP to grab everything in the playlist as one archive with numbered filenames.",
+    body: "Hit the download arrow next to one track for a single file, or use Download ZIP to pack the playlist into one archive with numbered filenames.",
   },
 ];
 

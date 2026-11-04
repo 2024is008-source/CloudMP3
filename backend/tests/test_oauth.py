@@ -23,6 +23,8 @@ def make_settings(tmp_path: Path, refresh: str = "seed-token") -> Settings:
         ytdlp_timeout=10,
         convert_timeout=10,
         max_convert_bytes=1024,
+        temp_ttl_seconds=300,
+        max_concurrent_conversions=2,
     )
 
 

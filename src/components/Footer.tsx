@@ -9,20 +9,13 @@ const FOOTER_LINK = "text-muted-foreground transition-colors hover:text-foregrou
 export function Footer() {
   return (
     <footer className="mt-section border-t border-border/60 bg-card/40">
-      <div className="mx-auto grid max-w-page gap-10 px-5 py-14 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto grid max-w-page gap-8 px-5 py-10 sm:grid-cols-2 sm:py-14 lg:grid-cols-4">
         <div>
           <div className="flex items-center gap-2.5">
             <BrandMark />
             <span className="font-display text-lg font-bold tracking-tight">{SITE.name}</span>
           </div>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{SITE.tagline}</p>
-          <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-            </span>
-            All Systems Operational
-          </p>
         </div>
 
         <div>
@@ -97,11 +90,11 @@ export function Footer() {
       </div>
 
       <div className="border-t border-border/60">
-        <div className="mx-auto max-w-page px-5 py-6 text-xs leading-relaxed text-muted-foreground">
+        <div className="mx-auto max-w-page px-5 py-6 text-sm leading-relaxed text-muted-foreground">
           <p>
             © {new Date().getFullYear()} {SITE.name}. All rights reserved.
           </p>
-          <p className="mt-2 max-w-3xl">
+          <p className="mt-2">
             Disclaimer: {SITE.name} ({SITE.domain}) is not affiliated with, endorsed by, or
             associated with SoundCloud Limited. All trademarks, service marks, and logos belong to
             their respective owners.

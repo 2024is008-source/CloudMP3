@@ -24,7 +24,26 @@ export default defineConfig(({ command, mode }) => {
 
   // node-server emits a plain Node HTTP server (.output/server/index.mjs) for the VPS;
   // "cloudflare-module" was the earlier Worker target and cannot run under PM2.
-  if (command === "build") plugins.push(nitro({ defaultPreset: "node-server" }));
+  if (command === "build") {
+    plugins.push(
+      nitro({
+        defaultPreset: "node-server",
+        // The same four headers deploy/nginx sets, declared by the app as well so a
+        // response that reaches anyone without going through that vhost — a preview
+        // port, a tunnel, a half-configured proxy — still carries them.
+        routeRules: {
+          "/**": {
+            headers: {
+              "X-Content-Type-Options": "nosniff",
+              "Referrer-Policy": "strict-origin-when-cross-origin",
+              "X-Frame-Options": "DENY",
+              "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+            },
+          },
+        },
+      }),
+    );
+  }
 
   // .env values are inlined at build time; SSR-only secrets stay out of the bundle by not being VITE_ prefixed.
   const env = loadEnv(mode, process.cwd(), "VITE_");

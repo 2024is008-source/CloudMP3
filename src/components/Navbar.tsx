@@ -25,7 +25,7 @@ const LINK_CLASS =
   "whitespace-nowrap rounded-full px-2.5 py-2 text-nav text-muted-foreground transition-colors hover:bg-accent hover:text-foreground lg:px-3";
 const ACTIVE_CLASS = "bg-secondary text-foreground";
 const ICON_BTN =
-  "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border text-foreground";
+  "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border text-foreground";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);

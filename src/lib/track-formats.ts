@@ -38,5 +38,7 @@ export type TrackFormats = {
   original: OriginalInfo;
   streams: StreamInfo[];
   wavConversion: { available: boolean; source: StreamInfo | null };
+  /** Server-side MP3 transcode: the bitrates the service will produce. */
+  mp3Conversion: { available: boolean; bitrates: number[]; source: StreamInfo | null };
   account: { configured: boolean };
 };

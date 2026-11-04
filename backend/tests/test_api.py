@@ -53,6 +53,14 @@ def test_invalid_quality_rejected(client: TestClient) -> None:
     assert response.json()["error"]["code"] == "bad_quality"
 
 
+def test_invalid_mp3_bitrate_rejected_before_network(client: TestClient) -> None:
+    response = client.get(
+        "/api/download/1?mode=mp3&bitrate=999", headers={"X-Api-Key": "test-key"}
+    )
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "bad_bitrate"
+
+
 def test_content_disposition_marks_utf8() -> None:
     header = main._disposition("Björk - Jóga.wav")
     assert header.startswith("attachment; filename=")

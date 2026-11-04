@@ -4,6 +4,7 @@ import { ChevronRight, ListMusic, Loader2, Music, RotateCcw } from "lucide-react
 
 import { CategoryBadge } from "@/components/SearchResultRow";
 import { Skeleton } from "@/components/ui/skeleton";
+import { trackAppError, trackResultOpened } from "@/lib/analytics";
 import { getRelatedTracks } from "@/lib/sc.functions";
 import { formatDuration, type SearchResult } from "@/lib/search-rank";
 import { setSelection } from "@/lib/selection";
@@ -16,6 +17,7 @@ function TrackCard({ item }: { item: SearchResult }) {
     <Link
       to="/track/$id"
       params={{ id: String(item.id) }}
+      onClick={() => trackResultOpened({ kind: "track", from: "related" })}
       className="group flex w-full min-w-0 items-center gap-3 rounded-xl border border-border bg-card/40 p-2.5 transition hover:border-primary/40 hover:bg-card"
     >
       {item.artwork_url ? (
@@ -31,7 +33,7 @@ function TrackCard({ item }: { item: SearchResult }) {
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-foreground transition group-hover:text-primary">
+        <p className="line-clamp-2 text-sm font-semibold text-foreground transition group-hover:text-primary">
           {item.title}
         </p>
         <p className="truncate text-xs text-muted-foreground">{item.artist}</p>
@@ -76,7 +78,7 @@ function PlaylistCard({
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-foreground transition group-hover:text-primary">
+        <p className="line-clamp-2 text-sm font-semibold text-foreground transition group-hover:text-primary">
           {item.title}
         </p>
         <p className="truncate text-xs text-muted-foreground">
@@ -138,6 +140,7 @@ export function RelatedTracks({ track }: { track: TrackDetails }) {
       })) as Result;
       if (reqId !== reqRef.current) return;
       if (!result.ok) {
+        trackAppError({ stage: "search", error: result.error });
         setError(result.error);
         return;
       }
@@ -147,8 +150,9 @@ export function RelatedTracks({ track }: { track: TrackDetails }) {
         similar: result.similar,
         playlists: result.playlists,
       });
-    } catch {
+    } catch (e) {
       if (reqId === reqRef.current) {
+        trackAppError({ stage: "search", error: e });
         setError("Related tracks are unavailable right now. Check your connection and retry.");
       }
     } finally {
@@ -165,6 +169,7 @@ export function RelatedTracks({ track }: { track: TrackDetails }) {
   }, [load]);
 
   function openPlaylist(item: SearchResult) {
+    trackResultOpened({ kind: "playlist", from: "related" });
     setSelection(item.permalink_url, false);
     void navigate({ to: "/", search: { focus: false } });
   }
@@ -195,9 +200,9 @@ export function RelatedTracks({ track }: { track: TrackDetails }) {
           <button
             type="button"
             onClick={() => void load()}
-            className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-border px-3.5 py-2 text-xs font-semibold transition hover:bg-accent"
+            className="ml-auto inline-flex h-11 items-center gap-1.5 rounded-full border border-border px-4 text-sm font-semibold transition hover:bg-accent"
           >
-            <RotateCcw className="h-3.5 w-3.5" aria-hidden /> Retry
+            <RotateCcw className="h-4 w-4" aria-hidden /> Retry
           </button>
         </div>
       ) : loading && !data ? (
@@ -207,7 +212,7 @@ export function RelatedTracks({ track }: { track: TrackDetails }) {
           ))}
         </div>
       ) : data && total > 0 ? (
-        <div>
+        <div className="mt-6">
           <Group title={`More from ${track.artist}`} items={data.more}>
             {(item) => <TrackCard item={item} />}
           </Group>

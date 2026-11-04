@@ -8,7 +8,7 @@ export const Route = createFileRoute("/privacy")({
   head: () =>
     seoHead({
       title: `Privacy Policy — ${SITE.name}`,
-      description: `${SITE.name} keeps no search logs, no download history and no copies of your files. Read exactly what is and is not stored.`,
+      description: `${SITE.name} keeps no accounts, no copies of your files and no history tied to you. Read exactly what is and is not stored, including what our analytics tag measures.`,
       path: "/privacy",
       ogType: "article",
     }),
@@ -19,14 +19,14 @@ function Privacy() {
   return (
     <LegalPage
       title="Privacy Policy"
-      updated="31 October 2026"
+      updated="3 November 2026"
       intro={`This policy explains what ${SITE.name} (${SITE.domain}) collects when you use the Service. The short version: we do not build a profile of you.`}
     >
       <LegalSection heading="1. Data collection">
         <p>
-          The Service does not store your search history, the links you paste, the tracks you
-          fetch, or your downloaded audio. There are no user accounts and no profiles, so there is
-          no history to keep.
+          The Service does not store your search history, the links you paste, the tracks you fetch,
+          or your downloaded audio. There are no user accounts and no profiles, so there is no
+          history to keep. Section 3 describes the aggregate usage measurement we do run.
         </p>
         <p>
           The link you paste is sent to our server only to ask SoundCloud what it refers to and to
@@ -37,19 +37,30 @@ function Privacy() {
 
       <LegalSection heading="2. Temporary file retention">
         <p>
-          Audio is proxied through the Service in memory and streamed straight to your browser.
-          Where a playlist is packed into a ZIP, that archive is assembled in isolated scratch
-          space and discarded as soon as the transfer to your browser finishes. Nothing is kept on
-          our servers afterwards, and we cannot retrieve a file you have already downloaded.
+          A file SoundCloud already serves in the form you asked for is proxied through the Service
+          in memory and streamed straight to your browser. Where audio has to be converted, or a
+          playlist packed into a ZIP, the work is done in isolated scratch space on the server and
+          discarded as soon as the transfer to your browser finishes or you leave the page. Nothing
+          is kept on our servers afterwards, and we cannot retrieve a file you have already
+          downloaded.
         </p>
       </LegalSection>
 
       <LegalSection heading="3. Cookies, analytics and security headers">
         <p>
-          The Service does not set advertising or tracking cookies of its own. Standard web-traffic
-          data (such as request metadata needed to serve the page and block abuse) may be recorded
-          by the hosting platform for security and reliability. We do not sell or rent personal
-          data, and we do not run third-party advertising trackers.
+          The Service does not set advertising cookies of its own. Standard web-traffic data (such
+          as request metadata needed to serve the page and block abuse) may be recorded by the
+          hosting platform for security and reliability. We do not sell or rent personal data, and
+          we do not run advertising or remarketing trackers.
+        </p>
+        <p>
+          We measure how the Service is used with Google Analytics 4 (the Google tag, gtag.js). It
+          reports which pages are opened, which audio formats and bitrates are requested, whether a
+          download finished, failed or was cancelled, and the text typed into the search box
+          truncated to 60 characters. That tag stores a browser identifier and cookies on your
+          device, and Google processes the data on our behalf, potentially in the United States. We
+          do not send names, email addresses, SoundCloud links, track or artist titles, tokens or
+          API keys, and we do not build individual profiles or connect this data to you.
         </p>
         <p>
           Pages are served over HTTPS with security headers in place, and the download endpoint is
