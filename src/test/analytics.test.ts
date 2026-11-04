@@ -82,6 +82,37 @@ describe("GA4 tag installation", () => {
     expect(window.gtag).toBe(original);
     expect(seen.some((call) => call[0] === "config")).toBe(true);
   });
+
+  it("names the Measurement ID it exports and loads the tag with exactly that ID", async () => {
+    // A typo in the ID alone would still inject a tag and still pass every other
+    // case here, so the exported constant and the script address are compared.
+    const { mod } = await loadAnalytics();
+    expect(mod.GA_MEASUREMENT_ID).toBe("G-RZVEMQ51PX");
+
+    mod.initAnalytics();
+    const src = document.querySelector<HTMLScriptElement>(
+      "script[src^='https://www.googletagmanager.com/gtag/js']",
+    )?.src;
+    expect(src).toBe(`https://www.googletagmanager.com/gtag/js?id=${mod.GA_MEASUREMENT_ID}`);
+  });
+});
+
+describe("server-side rendering", () => {
+  it("does nothing and throws nothing while there is no window", async () => {
+    const { mod, calls } = await loadAnalytics();
+    vi.stubGlobal("window", undefined);
+    try {
+      mod.initAnalytics();
+      mod.trackPageView();
+      mod.trackDownloadStart(single);
+      mod.trackSearch({ source: "header", tab: "tracks", term: "phonk", resultCount: 2 });
+      mod.trackAppError({ stage: "formats", error: new Error("upstream said no") });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+    expect(calls).toHaveLength(0);
+    expect(document.querySelectorAll("script[src*='googletagmanager.com']")).toHaveLength(0);
+  });
 });
 
 describe("event queueing", () => {
