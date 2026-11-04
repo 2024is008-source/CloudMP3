@@ -15,7 +15,7 @@ import appCss from "../styles.css?url";
 import { Footer } from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
 import { Toaster } from "@/components/ui/sonner";
-import { initAnalytics, trackPageView } from "@/lib/analytics";
+import { GA_MEASUREMENT_ID, initAnalytics, trackPageView } from "@/lib/analytics";
 import { SITE } from "@/lib/site";
 import { absoluteUrl } from "@/lib/seo";
 
@@ -103,6 +103,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
     ],
     scripts: [
+      {
+        src: `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`,
+        async: true,
+      },
+      {
+        children: `window.dataLayer = window.dataLayer || [];\nfunction gtag(){dataLayer.push(arguments);}\ngtag('js', new Date());\ngtag('config', '${GA_MEASUREMENT_ID}', { send_page_view: false });`,
+      },
       {
         type: "application/ld+json",
         children: JSON.stringify({

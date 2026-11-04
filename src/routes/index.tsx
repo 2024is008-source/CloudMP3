@@ -200,6 +200,7 @@ type Job = {
   /** Only a server ZIP reports bytes; a per-track job counts finished files. */
   received?: number;
   size?: number | null;
+  progress?: number | null;
 };
 
 type OneResult =
@@ -564,34 +565,87 @@ function Index() {
       total: tracks.length,
       done: 0,
       failed: 0,
-      // Until the first byte the server is doing all of the work, so the panel
-      // says where the wait is.
-      current: "Packing on the server",
+      current: tracks[0]?.title ?? "Packing on the server",
       paused: false,
       received: 0,
       size: null,
+      progress: 0,
     });
-    markRows(tracks, () => "busy");
+    // Mark first track busy, subsequent pending
+    markRows(tracks, (id) => (id === tracks[0]?.id ? "busy" : null));
 
     let failedIds: number[] = [];
+    let ticker: ReturnType<typeof setInterval> | null = null;
     try {
       const sentAt = performance.now();
-      const res = await fetch("/api/public/zip", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(zipRequestBody(name, tracks, quality)),
-        signal: controller.signal,
-      });
+      let doneIndex = 0;
+      const totalEstimatedMs = Math.max(3000, tracks.length * 2000);
+
+      ticker = setInterval(() => {
+        if (controller.signal.aborted) return;
+        const elapsed = performance.now() - sentAt;
+        const overallRatio = elapsed / totalEstimatedMs;
+        const simulated = Math.min(0.88, 0.88 * (1 - Math.exp(-2.2 * overallRatio)));
+
+        const estDone = Math.min(tracks.length - 1, Math.floor((simulated / 0.88) * tracks.length));
+        if (estDone !== doneIndex) {
+          doneIndex = estDone;
+          markRows(tracks, (id) => {
+            const idx = tracks.findIndex((t) => t.id === id);
+            if (idx < doneIndex) return "done";
+            if (idx === doneIndex) return "busy";
+            return null;
+          });
+        }
+
+        setJob((prev) => {
+          if (!prev || prev.kind !== "zip") return prev;
+          return {
+            ...prev,
+            done: doneIndex,
+            current: tracks[doneIndex]?.title ?? prev.current,
+            progress: simulated,
+          };
+        });
+      }, 60);
+
+      let res: Response;
+      try {
+        res = await fetch("/api/public/zip", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(zipRequestBody(name, tracks, quality)),
+          signal: controller.signal,
+        });
+      } finally {
+        if (ticker) {
+          clearInterval(ticker);
+          ticker = null;
+        }
+      }
       if (!res.ok) throw await downloadFailure(res);
+
       // The service answers only once the archive is whole, so everything up to
       // this line was the server packing it; from here the bytes are moving.
       const serverWaitMs = Math.round(performance.now() - sentAt);
-      setJob((j) => (j ? { ...j, current: "Receiving the archive" } : j));
+      markRows(tracks, () => "done");
+      setJob((j) => (j ? { ...j, done: tracks.length, current: "Receiving the archive", progress: 0.88 } : j));
 
+      const baseProgress = 0.88;
       const blob = await blobFromResponse(
         res,
         (received, size) =>
-          setJob((j) => (j ? { ...j, received, size: size ?? j.size ?? null } : j)),
+          setJob((j) => {
+            if (!j) return j;
+            const byteFraction = size && size > 0 ? Math.min(1, received / size) : 0.5;
+            const combined = Math.min(0.99, baseProgress + (0.99 - baseProgress) * byteFraction);
+            return {
+              ...j,
+              received,
+              size: size ?? j.size ?? null,
+              progress: combined,
+            };
+          }),
         controller.signal,
       );
 
@@ -601,8 +655,9 @@ function Index() {
         .map(Number);
       const packed = Number(res.headers.get("X-Zip-Tracks")) || tracks.length - failedIds.length;
       markRows(tracks, (id) => (failedIds.includes(id) ? "err" : "done"));
+      setJob((j) => (j ? { ...j, progress: 1 } : j));
       saveDownload(blob, filenameFromHeaders(res) ?? `${safe(name)}.zip`, "application/zip");
-      setJob(null);
+      setTimeout(() => setJob(null), 800);
       trackDownloadComplete({
         ...request,
         trackCount: packed,
@@ -637,6 +692,7 @@ function Index() {
       }
       setJob(null);
     } finally {
+      if (ticker) clearInterval(ticker);
       jobSlot.release(controller);
     }
   }
@@ -660,18 +716,23 @@ function Index() {
   // A per-track job counts finished files; a server ZIP counts the bytes it has
   // been sent, because the archive only exists once the server has finished it.
   const jobPct = job
-    ? job.kind === "zip" && job.size
-      ? Math.min(100, Math.round(((job.received ?? 0) / job.size) * 100))
-      : Math.round((job.done / Math.max(1, job.total)) * 100)
+    ? job.progress !== undefined && job.progress !== null
+      ? Math.min(100, Math.round(job.progress * 100))
+      : job.kind === "zip" && job.size
+        ? Math.min(100, Math.round(((job.received ?? 0) / job.size) * 100))
+        : Math.round((job.done / Math.max(1, job.total)) * 100)
     : 0;
-  // A server ZIP has no honest percentage until the archive's length is known;
-  // a bar parked at 0% reads as a stalled download rather than a server working.
-  const jobKnownPct = job !== null && !(job.kind === "zip" && !job.size);
+  // A server ZIP has an honest percentage both when packing tracks and when receiving bytes
+  const jobKnownPct =
+    job !== null &&
+    (job.progress !== undefined && job.progress !== null
+      ? true
+      : !(job.kind === "zip" && !job.size));
   const jobLabel =
     job?.kind === "zip"
       ? job.size && job.received
-        ? `ZIP ${fmtSize(job.received)} of ${fmtSize(job.size)}`
-        : "Preparing ZIP"
+        ? `ZIP ${fmtSize(job.received)} of ${fmtSize(job.size)} (${jobPct}%)`
+        : `Preparing ZIP · ${job.done}/${job.total} tracks (${jobPct}%)`
       : job
         ? `Downloading ${job.done}/${job.total}`
         : "";
@@ -1046,7 +1107,7 @@ function Index() {
                   {jobLabel}
                 </span>
                 {job.current && (
-                  <span className="min-w-0 max-w-48 truncate text-muted-foreground">
+                  <span className="min-w-0 max-w-xs sm:max-w-md truncate text-muted-foreground">
                     Now: {job.current}
                   </span>
                 )}
@@ -1082,19 +1143,34 @@ function Index() {
             {info.tracks.length > 0 && (
               <>
                 <button
-                  onClick={() => runFiles(info.tracks)}
+                  onClick={() => runFiles(selected.size > 0 ? selectedTracks : info.tracks)}
                   disabled={!!job}
                   className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
                 >
-                  <Download className="h-4 w-4" /> Download All
+                  <Download className="h-4 w-4" /> {selected.size > 0 ? `Download (${selected.size})` : "Download All"}
                 </button>
                 <button
-                  onClick={() => runZip(info.tracks, info.title)}
+                  onClick={() =>
+                    runZip(
+                      selected.size > 0 ? selectedTracks : info.tracks,
+                      selected.size > 0 ? `${info.title} (selection)` : info.title,
+                    )
+                  }
                   disabled={!!job}
                   className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-5 py-2.5 text-sm font-semibold transition hover:bg-accent disabled:opacity-60"
                 >
-                  <FolderArchive className="h-4 w-4" /> Download ZIP
+                  <FolderArchive className="h-4 w-4" /> {selected.size > 0 ? `Download ZIP (${selected.size})` : "Download ZIP"}
                 </button>
+                {selected.size > 0 && (
+                  <button
+                    onClick={() => runZip(info.tracks, info.title)}
+                    disabled={!!job}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border/70 px-3 py-2 text-xs font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground disabled:opacity-60"
+                    title="Download all tracks in the playlist as a ZIP"
+                  >
+                    ZIP All ({info.tracks.length})
+                  </button>
+                )}
                 <label className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2.5 text-sm text-muted-foreground">
                   <Music className="h-4 w-4" />
                   <select
@@ -1127,8 +1203,15 @@ function Index() {
                   </button>
                 )}
                 {selected.size > 0 && (
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {selected.size} selected
+                  <span className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    <span>{selected.size} selected</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelected(new Set())}
+                      className="text-xs text-primary underline-offset-2 hover:underline"
+                    >
+                      Clear
+                    </button>
                   </span>
                 )}
               </>

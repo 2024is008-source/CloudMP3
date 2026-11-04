@@ -51,6 +51,14 @@ export default defineConfig(({ command, mode }) => {
   for (const [key, value] of Object.entries(env))
     define[`import.meta.env.${key}`] = JSON.stringify(value);
 
+  // Populate runtime process.env for Node server / API routes in dev from .env
+  const serverEnv = loadEnv(mode, process.cwd(), ["CLOUDMP3_"]);
+  for (const [key, value] of Object.entries(serverEnv)) {
+    if (!process.env[key]) {
+      process.env[key] = value;
+    }
+  }
+
   const config: UserConfig = {
     define,
     css: { transformer: "lightningcss" },

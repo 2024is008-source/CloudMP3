@@ -191,19 +191,48 @@ async def stage_source(url: str, settings: Settings, tmpdir: str) -> str:
         await download_to_file(url, dest, settings.user_agent, settings.max_convert_bytes)
         return dest
 
+    segments = await collect_segments(url, settings.user_agent)
+    if not segments:
+        raise ServiceError(502, "download_failed", "SoundCloud sent no audio for this track.")
+
+    # Concurrently fetch segments with a sliding window over pooled keep-alive connections
+    WINDOW = 8
+    sem = asyncio.Semaphore(WINDOW)
+    async with media_client(NETWORK_TIMEOUT, headers={"User-Agent": settings.user_agent}) as client:
+        async def fetch_one(seg_url: str) -> bytes:
+            async with sem:
+                for attempt in range(2):
+                    try:
+                        resp = await client.get(seg_url)
+                        if resp.status_code == 200:
+                            return resp.content
+                    except httpx.HTTPError:
+                        if attempt == 1:
+                            raise ServiceError(
+                                502,
+                                "download_failed",
+                                "The original file could not be streamed from SoundCloud.",
+                            )
+                raise ServiceError(
+                    502,
+                    "download_failed",
+                    "The original file could not be streamed from SoundCloud.",
+                )
+
+        chunks = await asyncio.gather(*(fetch_one(s) for s in segments))
+
     written = 0
     try:
         async with await anyio.open_file(dest, mode="wb") as file:
-            for segment in await collect_segments(url, settings.user_agent):
-                async for chunk in stream_file(segment, settings.user_agent):
-                    written += len(chunk)
-                    if written > settings.max_convert_bytes:
-                        raise ServiceError(
-                            413,
-                            "download_too_large",
-                            "This track is larger than the limit set on this server.",
-                        )
-                    await file.write(chunk)
+            for chunk in chunks:
+                written += len(chunk)
+                if written > settings.max_convert_bytes:
+                    raise ServiceError(
+                        413,
+                        "download_too_large",
+                        "This track is larger than the limit set on this server.",
+                    )
+                await file.write(chunk)
     except BaseException:
         with contextlib.suppress(OSError):
             os.remove(dest)

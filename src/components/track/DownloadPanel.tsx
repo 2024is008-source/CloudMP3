@@ -125,7 +125,12 @@ export function DownloadPanel({
       estimatedBytes: estimateBytes(track.duration, fmt.kbps ?? 0),
       bitrate: fmt.kbps,
       durationMs: track.duration,
-      serviceAvailable: formats?.configured === true,
+      // An absent formats response means the capability check is still
+      // unknown, not that the conversion service is unavailable. Keep
+      // server-bound formats on the server until it explicitly reports
+      // configured: false; otherwise the browser may try to decode an
+      // incomplete/loading stream and show a conversion error.
+      serviceAvailable: formats?.configured !== false,
     });
     const controller = new AbortController();
     abortRef.current?.abort();
@@ -138,6 +143,7 @@ export function DownloadPanel({
     let fileFormat = formatOfExt(fmt.ext);
     let conversionMs: number | undefined;
     let serverWaitMs: number | undefined;
+    let ticker: ReturnType<typeof setInterval> | null = null;
     const request: DownloadInfo = {
       fileFormat,
       bitrate: fmt.kbps,
@@ -173,9 +179,28 @@ export function DownloadPanel({
 
       if (fmt.kind === "original") {
         const sentAt = performance.now();
-        const res = await fetch(`/api/public/track?id=${track.id}&mode=original`, {
-          signal: controller.signal,
-        });
+        let prepareProgress = 0;
+        ticker = setInterval(() => {
+          if (controller.signal.aborted) return;
+          const elapsed = performance.now() - sentAt;
+          const simulated = Math.min(0.8, 0.8 * (1 - Math.exp(-elapsed / 1800)));
+          if (simulated > prepareProgress) {
+            prepareProgress = simulated;
+            setJob((prev) => (prev ? { ...prev, progress: prepareProgress } : prev));
+          }
+        }, 60);
+
+        let res: Response;
+        try {
+          res = await fetch(`/api/public/track?id=${track.id}&mode=original`, {
+            signal: controller.signal,
+          });
+        } finally {
+          if (ticker) {
+            clearInterval(ticker);
+            ticker = null;
+          }
+        }
         if (!res.ok) throw await downloadFailure(res);
         serverWaitMs = Math.round(performance.now() - sentAt);
         ext = res.headers.get("X-File-Ext") || ext;
@@ -185,7 +210,22 @@ export function DownloadPanel({
           (formats?.original.available ? formats.original.mime : null) ||
           "application/octet-stream";
         filename = filenameFromHeaders(res);
-        data = await readResponse(res, onProgress, controller.signal);
+
+        const baseProgress = Math.max(0.5, prepareProgress);
+        const onOriginalProgress = (received: number, total: number | null) => {
+          const now = performance.now();
+          if (now - lastTick.current < 80) return;
+          lastTick.current = now;
+          const byteFraction = total && total > 0 ? Math.min(1, received / total) : 1;
+          const combined = Math.min(0.99, baseProgress + (0.99 - baseProgress) * byteFraction);
+          setJob({
+            phase: "downloading",
+            progress: combined,
+            received,
+            total,
+          });
+        };
+        data = await readResponse(res, onOriginalProgress, controller.signal);
       } else if (route === "server") {
         // FFmpeg writes the file on disk and the service deletes it as the last
         // byte leaves, so the tab only ever holds the response it is saving.
@@ -194,9 +234,37 @@ export function DownloadPanel({
             ? `mode=mp3&bitrate=${fmt.kbps}&q=${fmt.quality}`
             : `mode=wav&q=${fmt.quality}`;
         const sentAt = performance.now();
-        const res = await fetch(`/api/public/track?id=${track.id}&${target}`, {
-          signal: controller.signal,
-        });
+
+        // Calculate expected prepare time based on track length (~22ms per second of audio)
+        const expectedMs = Math.max(3500, Math.min(15000, (track.duration / 1000) * 22));
+        let prepareProgress = 0;
+
+        ticker = setInterval(() => {
+          if (controller.signal.aborted) return;
+          const elapsed = performance.now() - sentAt;
+          const ratio = elapsed / expectedMs;
+          // Smooth asymptotic approach towards ~88%
+          const simulated = Math.min(0.88, 0.88 * (1 - Math.exp(-2.2 * ratio)));
+          if (simulated > prepareProgress) {
+            prepareProgress = simulated;
+            setJob((prev) => {
+              if (!prev || prev.phase !== "converting") return prev;
+              return { ...prev, progress: prepareProgress };
+            });
+          }
+        }, 60);
+
+        let res: Response;
+        try {
+          res = await fetch(`/api/public/track?id=${track.id}&${target}`, {
+            signal: controller.signal,
+          });
+        } finally {
+          if (ticker) {
+            clearInterval(ticker);
+            ticker = null;
+          }
+        }
         if (!res.ok) throw await downloadFailure(res);
         // The service starts answering only when its file is ready to stream.
         serverWaitMs = Math.round(performance.now() - sentAt);
@@ -204,7 +272,22 @@ export function DownloadPanel({
         fileFormat = formatOfExt(ext);
         mime = res.headers.get("Content-Type") || (fmt.kind === "mp3" ? "audio/mpeg" : "audio/wav");
         filename = filenameFromHeaders(res);
-        data = await readResponse(res, onProgress, controller.signal);
+
+        const baseProgress = Math.max(0.7, prepareProgress);
+        const onServerProgress = (received: number, total: number | null) => {
+          const now = performance.now();
+          if (now - lastTick.current < 80) return;
+          lastTick.current = now;
+          const byteFraction = total && total > 0 ? Math.min(1, received / total) : 1;
+          const combined = Math.min(0.99, baseProgress + (0.99 - baseProgress) * byteFraction);
+          setJob({
+            phase: "downloading",
+            progress: combined,
+            received,
+            total,
+          });
+        };
+        data = await readResponse(res, onServerProgress, controller.signal);
       } else {
         const sentAt = performance.now();
         const res = await fetch(`/api/public/track?id=${track.id}&q=${fmt.quality}`, {
@@ -247,7 +330,7 @@ export function DownloadPanel({
         trackDownloadCancelled({ ...request, fileFormat });
         return;
       }
-      setJob({ phase: "saving", progress: null });
+      setJob((prev) => (prev ? { ...prev, phase: "saving", progress: 0.99 } : { phase: "saving", progress: 0.99 }));
       const fallback = `${safeName(`${track.artist} - ${track.title}`)}.${ext}`;
       saveDownload(data as BlobPart, withExtension(filename ?? fallback, ext), mime);
       // The file is finished and given to the browser here; nothing claims the
@@ -284,6 +367,7 @@ export function DownloadPanel({
       });
       toast.error(`Couldn't download ${track.title}`);
     } finally {
+      if (ticker) clearInterval(ticker);
       if (abortRef.current === controller) abortRef.current = null;
     }
   }, [allowed, formats, option, track]);

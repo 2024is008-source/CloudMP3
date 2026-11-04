@@ -115,8 +115,12 @@ export function initAnalytics(): void {
     const queue = (window.dataLayer ??= []);
     // The official bootstrap. gtag.js replaces this with the real function and
     // replays whatever the page queued in the meantime.
-    window.gtag ??= function gtag(...args: unknown[]) {
-      queue.push(args);
+    // Note: gtag.js strictly checks for an [object Arguments] or `callee` property
+    // via Object.prototype.toString.call(a) === '[object Arguments]' in its queue
+    // processor; pushing a rest array `args` causes gtag to drop commands silently.
+    window.gtag ??= function gtag() {
+      // eslint-disable-next-line prefer-rest-params
+      queue.push(arguments);
     };
     window.gtag("js", new Date());
     window.gtag("config", GA_MEASUREMENT_ID, { send_page_view: false });
