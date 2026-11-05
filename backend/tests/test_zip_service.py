@@ -376,3 +376,108 @@ def test_a_copy_that_fails_on_disk_is_reported_as_a_full_disk(tmp_path: Path) ->
         zip_service._add_entry(NoRoomArchive(), file, "01 Artist - Title.mp3")
 
     assert (excinfo.value.status, excinfo.value.code) == (507, "zip_disk_full")
+
+
+def test_tracks_are_fetched_in_parallel_but_written_in_order(tmp_path: Path) -> None:
+    settings = make_settings(tmp_path, zip_fetch_concurrency=4)
+    active = 0
+    peak = 0
+
+    async def producer(track: ZipTrack) -> TrackFile:
+        nonlocal active, peak
+        active += 1
+        peak = max(peak, active)
+        # Later tracks finish first, so order must come from the playlist.
+        await asyncio.sleep(0.05 * (5 - track.track_id))
+        active -= 1
+        tmpdir = tempfile.mkdtemp(dir=tmp_path)
+        path = os.path.join(tmpdir, "t.mp3")
+        Path(path).write_bytes(b"x" * 10)
+        return TrackFile(path, tmpdir, "mp3", f"Track {track.track_id}.mp3")
+
+    archive = asyncio.run(
+        zip_service.build_archive([ZipTrack(i) for i in range(1, 5)], settings, producer)
+    )
+    assert peak == 4
+    assert archive.entries == [f"0{i} Track {i}.mp3" for i in range(1, 5)]
+
+
+def test_staged_tracks_never_outrun_the_window(tmp_path: Path) -> None:
+    """A slow writer must not let the fetchers stage the whole playlist on disk."""
+    settings = make_settings(tmp_path, zip_fetch_concurrency=3)
+    staged: set[str] = set()
+    peak = 0
+
+    async def producer(track: ZipTrack) -> TrackFile:
+        tmpdir = tempfile.mkdtemp(dir=tmp_path)
+        staged.add(tmpdir)
+        path = os.path.join(tmpdir, "t.mp3")
+        Path(path).write_bytes(b"x" * 10)
+        return TrackFile(path, tmpdir, "mp3", f"Track {track.track_id}.mp3")
+
+    real_add = zip_service._add_entry
+
+    def slow_add(zf, file, arcname):
+        nonlocal peak
+        peak = max(peak, len([d for d in staged if os.path.exists(d)]))
+        import time
+
+        time.sleep(0.02)
+        return real_add(zf, file, arcname)
+
+    original = zip_service._add_entry
+    zip_service._add_entry = slow_add
+    try:
+        archive = asyncio.run(
+            zip_service.build_archive([ZipTrack(i) for i in range(1, 16)], settings, producer)
+        )
+    finally:
+        zip_service._add_entry = original
+    assert len(archive.entries) == 15
+    # The window plus the one track being packed — never the whole playlist.
+    assert peak <= 3 + 1
+
+
+def test_in_flight_tracks_are_cleaned_up_when_the_build_is_cancelled(tmp_path: Path) -> None:
+    settings = make_settings(tmp_path, zip_fetch_concurrency=4)
+    dirs: list[str] = []
+
+    async def producer(track: ZipTrack) -> TrackFile:
+        tmpdir = tempfile.mkdtemp(dir=tmp_path)
+        dirs.append(tmpdir)
+        path = os.path.join(tmpdir, "t.mp3")
+        Path(path).write_bytes(b"x")
+        if track.track_id > 1:
+            await asyncio.sleep(10)
+        return TrackFile(path, tmpdir, "mp3", f"Track {track.track_id}.mp3")
+
+    async def scenario() -> None:
+        task = asyncio.create_task(
+            zip_service.build_archive([ZipTrack(i) for i in range(1, 6)], settings, producer)
+        )
+        await asyncio.sleep(0.2)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+
+    asyncio.run(scenario())
+    assert all(not os.path.exists(d) or os.listdir(d) == ["t.mp3"] for d in dirs)
+    assert not any(Path(settings.zip_temp_dir).glob("cloudmp3-zip-*"))
+
+
+def test_append_only_sink_survives_short_writes(tmp_path: Path) -> None:
+    sink = zip_service._AppendOnly(str(tmp_path / "out.bin"))
+    real = sink._file
+
+    class Trickle:
+        def write(self, view):
+            return real.write(bytes(view[:3]))
+
+        def close(self):
+            real.close()
+
+    sink._file = Trickle()
+    assert sink.write(b"0123456789") == 10
+    assert sink.tell() == 10
+    sink.close()
+    assert (tmp_path / "out.bin").read_bytes() == b"0123456789"

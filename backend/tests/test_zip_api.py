@@ -165,9 +165,7 @@ def test_streams_a_real_zip_and_deletes_it_afterwards(monkeypatch, tmp_path: Pat
     assert response.headers["content-type"] == "application/zip"
     assert response.headers["X-File-Ext"] == "zip"
     assert "My Playlist.zip" in response.headers["Content-Disposition"]
-    assert response.headers["X-Zip-Tracks"] == "2"
-    assert response.headers["X-Zip-Failed"] == "0"
-    assert int(response.headers["Content-Length"]) == len(response.content)
+    assert response.headers["X-Zip-Streaming"] == "1"
 
     with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
         assert archive.namelist() == ["01 Artist - Title 1.mp3", "02 Artist - Title 2.m4a"]
@@ -191,11 +189,9 @@ def test_zip_reports_the_tracks_it_could_not_fetch(monkeypatch, tmp_path: Path) 
     )
 
     assert response.status_code == 200
-    assert response.headers["X-Zip-Tracks"] == "1"
-    assert response.headers["X-Zip-Failed"] == "1"
-    assert response.headers["X-Zip-Failed-Ids"] == "2"
     with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
-        assert archive.namelist() == ["01 Artist - Title 1.m4a"]
+        assert archive.namelist() == ["01 Artist - Title 1.m4a", "missing-tracks.txt"]
+        assert "Track 2" in archive.read("missing-tracks.txt").decode()
 
 
 def test_zip_fails_when_no_track_can_be_fetched(monkeypatch, tmp_path: Path) -> None:
@@ -345,3 +341,56 @@ async def test_a_cache_flush_keeps_a_lock_another_request_is_holding(monkeypatch
     release.set()
     await asyncio.gather(second, third)
     assert fetched.count(2) == 1
+
+
+def test_zip_status_reports_packed_and_failed_tracks(monkeypatch, tmp_path: Path) -> None:
+    settings = replace(
+        main.settings, service_key="test-key", zip_temp_dir=str(tmp_path / "zips"), max_zip_tracks=3
+    )
+    monkeypatch.setattr(main, "settings", settings)
+    monkeypatch.setattr(main, "_zip_source", StubSource(missing=(2,)))
+    client = TestClient(main.app)
+    job = "job_abcdefghijklmnop"
+    payload = body({"id": 1}, {"id": 2})
+    payload["jobId"] = job
+
+    response = client.post("/api/download/zip", json=payload, headers=HEADERS)
+    assert response.status_code == 200
+
+    status = client.get(f"/api/download/zip/status/{job}", headers=HEADERS).json()
+    assert status == {"total": 2, "packed": 1, "failed": [2], "done": True, "error": None}
+    assert client.get("/api/download/zip/status/nope", headers=HEADERS).status_code == 404
+
+
+def test_a_running_job_id_cannot_be_reused(monkeypatch, tmp_path: Path) -> None:
+    settings = replace(
+        main.settings, service_key="test-key", zip_temp_dir=str(tmp_path / "zips"), max_zip_tracks=3
+    )
+    monkeypatch.setattr(main, "settings", settings)
+    monkeypatch.setattr(main, "_zip_source", StubSource())
+    monkeypatch.setitem(
+        main.ZIP_JOBS,
+        "job_abcdefghijklmnop",
+        {"total": 1, "archive": SimpleNamespace(entries=[], failed=[]), "done": False, "at": time.monotonic()},
+    )
+    client = TestClient(main.app)
+    payload = body({"id": 1})
+    payload["jobId"] = "job_abcdefghijklmnop"
+
+    response = client.post("/api/download/zip", json=payload, headers=HEADERS)
+
+    assert response.status_code == 409
+    assert response.json()["error"]["code"] == "duplicate_job"
+
+
+def test_a_long_running_job_outlives_the_status_ttl(monkeypatch) -> None:
+    now = time.monotonic()
+    monkeypatch.setattr(main, "ZIP_JOBS", {
+        "running": {"total": 1, "archive": None, "done": False, "at": now - main.ZIP_JOB_TTL - 60},
+        "old-done": {"total": 1, "archive": None, "done": True, "at": now - 5000, "finished_at": now - main.ZIP_JOB_TTL - 1},
+        "fresh-done": {"total": 1, "archive": None, "done": True, "at": now - 5000, "finished_at": now - 5},
+    })
+
+    main._prune_jobs()
+
+    assert sorted(main.ZIP_JOBS) == ["fresh-done", "running"]

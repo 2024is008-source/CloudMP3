@@ -243,6 +243,24 @@ function fmt(ms: number) {
   const p = (n: number) => String(n).padStart(2, "0");
   return h ? `${h}:${p(m)}:${p(r)}` : `${m}:${p(r)}`;
 }
+/** The reason the server gave for a ZIP that broke after it had started streaming. */
+async function zipJobError(jobId: string): Promise<string | null> {
+  try {
+    const r = await fetch(`/api/public/zip-status?id=${jobId}`);
+    if (!r.ok) return null;
+    const status = (await r.json()) as { error?: string | null };
+    return typeof status.error === "string" && status.error ? status.error : null;
+  } catch {
+    return null;
+  }
+}
+
+function newZipJobId(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return "zip_" + Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 const safe = (s: string) => s.replace(/[\\/:*?"<>|]/g, "_");
 
 function Index() {
@@ -576,86 +594,74 @@ function Index() {
 
     let failedIds: number[] = [];
     let ticker: ReturnType<typeof setInterval> | null = null;
+    const jobId = newZipJobId();
+    // True once the server has answered 200: from then on a failure arrives as a
+    // cut stream, and the reason lives in the job status instead of the response.
+    let streaming = false;
     try {
       const sentAt = performance.now();
-      let doneIndex = 0;
-      const totalEstimatedMs = Math.max(3000, tracks.length * 2000);
+      type ZipStatus = { total: number; packed: number; failed: number[]; done: boolean };
+      let last: ZipStatus | null = null;
 
-      ticker = setInterval(() => {
-        if (controller.signal.aborted) return;
-        const elapsed = performance.now() - sentAt;
-        const overallRatio = elapsed / totalEstimatedMs;
-        const simulated = Math.min(0.88, 0.88 * (1 - Math.exp(-2.2 * overallRatio)));
-
-        const estDone = Math.min(tracks.length - 1, Math.floor((simulated / 0.88) * tracks.length));
-        if (estDone !== doneIndex) {
-          doneIndex = estDone;
-          markRows(tracks, (id) => {
-            const idx = tracks.findIndex((t) => t.id === id);
-            if (idx < doneIndex) return "done";
-            if (idx === doneIndex) return "busy";
-            return null;
-          });
-        }
-
+      // Real progress from the server: which tracks are packed and which failed.
+      const applyStatus = (status: ZipStatus) => {
+        last = status;
+        const settled = status.packed + status.failed.length;
+        markRows(tracks, (id) => {
+          if (status.failed.includes(id)) return "err";
+          const idx = tracks.findIndex((t) => t.id === id);
+          if (idx < settled) return "done";
+          if (idx === settled && !status.done) return "busy";
+          return null;
+        });
         setJob((prev) => {
           if (!prev || prev.kind !== "zip") return prev;
+          const fraction = status.total > 0 ? settled / status.total : 0;
           return {
             ...prev,
-            done: doneIndex,
-            current: tracks[doneIndex]?.title ?? prev.current,
-            progress: simulated,
+            done: status.packed,
+            failed: status.failed.length,
+            current: status.done ? "Finishing download" : (tracks[settled]?.title ?? prev.current),
+            progress: Math.max(prev.progress ?? 0, Math.min(0.97, 0.97 * fraction)),
           };
         });
-      }, 60);
-
-      let res: Response;
-      try {
-        res = await fetch("/api/public/zip", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(zipRequestBody(name, tracks, quality)),
-          signal: controller.signal,
-        });
-      } finally {
-        if (ticker) {
-          clearInterval(ticker);
-          ticker = null;
+      };
+      const poll = async () => {
+        try {
+          const r = await fetch(`/api/public/zip-status?id=${jobId}`, { signal: controller.signal });
+          if (r.ok) applyStatus((await r.json()) as ZipStatus);
+        } catch {
+          /* the next poll will try again */
         }
-      }
+      };
+      ticker = setInterval(() => {
+        if (!controller.signal.aborted) void poll();
+      }, 700);
+
+      const res = await fetch("/api/public/zip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(zipRequestBody(name, tracks, quality, jobId)),
+        signal: controller.signal,
+      });
       if (!res.ok) throw await downloadFailure(res);
-
-      // The service answers only once the archive is whole, so everything up to
-      // this line was the server packing it; from here the bytes are moving.
+      streaming = true;
       const serverWaitMs = Math.round(performance.now() - sentAt);
-      markRows(tracks, () => "done");
-      setJob((j) => (j ? { ...j, done: tracks.length, current: "Receiving the archive", progress: 0.88 } : j));
 
-      const baseProgress = 0.88;
       const blob = await blobFromResponse(
         res,
-        (received, size) =>
-          setJob((j) => {
-            if (!j) return j;
-            const byteFraction = size && size > 0 ? Math.min(1, received / size) : 0.5;
-            const combined = Math.min(0.99, baseProgress + (0.99 - baseProgress) * byteFraction);
-            return {
-              ...j,
-              received,
-              size: size ?? j.size ?? null,
-              progress: combined,
-            };
-          }),
+        (received) => setJob((j) => (j ? { ...j, received } : j)),
         controller.signal,
       );
+      clearInterval(ticker);
+      ticker = null;
+      await poll();
+      const final = last as ZipStatus | null;
 
-      failedIds = (res.headers.get("X-Zip-Failed-Ids") ?? "")
-        .split(",")
-        .filter(Boolean)
-        .map(Number);
-      const packed = Number(res.headers.get("X-Zip-Tracks")) || tracks.length - failedIds.length;
+      failedIds = final?.failed ?? [];
+      const packed = final?.packed ?? tracks.length - failedIds.length;
       markRows(tracks, (id) => (failedIds.includes(id) ? "err" : "done"));
-      setJob((j) => (j ? { ...j, progress: 1 } : j));
+      setJob((j) => (j ? { ...j, done: packed, failed: failedIds.length, progress: 1 } : j));
       saveDownload(blob, filenameFromHeaders(res) ?? `${safe(name)}.zip`, "application/zip");
       setTimeout(() => setJob(null), 800);
       trackDownloadComplete({
@@ -668,11 +674,16 @@ function Index() {
       });
       if (failedIds.length) {
         trackAppError({ stage: "zip", error: "no_stream" });
+        const titles = tracks
+          .filter((t) => failedIds.includes(t.id))
+          .map((t) => t.title)
+          .slice(0, 3)
+          .join(", ");
         toast.error(
-          `ZIP handed to your browser with ${packed} track${packed === 1 ? "" : "s"} — ${failedIds.length} could not be packed.`,
+          `ZIP saved with ${packed} track${packed === 1 ? "" : "s"} — ${failedIds.length} could not be added${titles ? `: ${titles}` : ""}.`,
         );
       } else {
-        toast.success(`ZIP handed to your browser — ${packed} track${packed === 1 ? "" : "s"}`);
+        toast.success(`ZIP saved — ${packed} track${packed === 1 ? "" : "s"}`);
       }
     } catch (e) {
       const elapsedMs = Math.round(performance.now() - beganAt);
@@ -688,7 +699,8 @@ function Index() {
           elapsedMs,
         });
         markRows(tracks, () => "err");
-        toast.error(userError(e));
+        const reason = streaming ? await zipJobError(jobId) : null;
+        toast.error(reason ?? userError(e));
       }
       setJob(null);
     } finally {

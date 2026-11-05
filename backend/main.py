@@ -476,19 +476,107 @@ async def _watched_build(tracks: list[ZipTrack], request: Request) -> ZipArchive
         raise
 
 
-def _zip_headers(filename: str, archive: ZipArchive) -> dict[str, str]:
-    failed = ",".join(str(item["trackId"]) for item in archive.failed)[:200]
+def _zip_stream_headers(filename: str) -> dict[str, str]:
     return {
         "Content-Disposition": _disposition(filename),
         "X-Filename": quote(filename, safe=""),
         "X-File-Ext": "zip",
-        "Content-Length": str(archive.size),
-        "X-Total-Bytes": str(archive.size),
-        "X-Zip-Tracks": str(len(archive.entries)),
-        "X-Zip-Failed": str(len(archive.failed)),
-        "X-Zip-Failed-Ids": failed,
+        "X-Zip-Streaming": "1",
         "Cache-Control": "no-store",
         "X-Robots-Tag": "noindex",
+    }
+
+
+async def _first_entry(task: asyncio.Task[ZipArchive], started: asyncio.Event, request: Request) -> None:
+    """Wait until the first track is in the archive, so errors can still be a status code."""
+    waiter = asyncio.create_task(started.wait())
+    try:
+        while True:
+            if task.done():
+                await task  # raises the build's ServiceError, if any
+                return
+            if started.is_set():
+                return
+            if await request.is_disconnected():
+                raise ServiceError(499, "client_disconnected", "The browser left mid-ZIP.")
+            await asyncio.wait({task, waiter}, timeout=DISCONNECT_POLL, return_when=asyncio.FIRST_COMPLETED)
+    except BaseException:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        raise
+    finally:
+        waiter.cancel()
+
+
+async def _stream_growing(task: asyncio.Task[ZipArchive], path: str, tmpdir: str):
+    """Send archive bytes as they are written, while later tracks are still packing."""
+    try:
+        with open(path, "rb") as file:
+            while True:
+                chunk = await asyncio.to_thread(file.read, ZIP_STREAM_CHUNK)
+                if chunk:
+                    yield chunk
+                    continue
+                if task.done():
+                    await task  # surface a mid-build failure as a broken download
+                    rest = await asyncio.to_thread(file.read)
+                    if rest:
+                        yield rest
+                    return
+                await asyncio.sleep(0.05)
+    finally:
+        # Synchronous steps first: a cancelled generator can have its next await
+        # cancelled too, and the directory must not depend on that await.
+        if not task.done():
+            task.cancel()
+        cleanup_dir(tmpdir)
+        await asyncio.gather(task, return_exceptions=True)
+
+
+ZIP_STREAM_CHUNK = 256 * 1024
+ZIP_JOBS: dict[str, dict[str, Any]] = {}
+ZIP_JOB_TTL = 900
+_JOB_ID = re.compile(r"[A-Za-z0-9_-]{16,64}")
+
+
+def _job_id(payload: Any) -> str | None:
+    value = payload.get("jobId") if isinstance(payload, dict) else None
+    return value if isinstance(value, str) and _JOB_ID.fullmatch(value) else None
+
+
+def _prune_jobs() -> None:
+    """Forget finished jobs a while after they end.
+
+    The age runs from the moment a job finishes, not from when it began: a build
+    may take up to ZIP_JOB_TIMEOUT_SECONDS and must stay reportable throughout.
+    A job that never reports finishing is dropped once it is older than the
+    build timeout plus the TTL.
+    """
+    now = time.monotonic()
+    stale = []
+    for key, job in ZIP_JOBS.items():
+        if job["done"]:
+            expired = now - job.get("finished_at", job["at"]) > ZIP_JOB_TTL
+        else:
+            expired = now - job["at"] > settings.zip_timeout + ZIP_JOB_TTL
+        if expired:
+            stale.append(key)
+    for key in stale:
+        ZIP_JOBS.pop(key, None)
+
+
+@app.get("/api/download/zip/status/{job_id}", dependencies=[Depends(require_key)])
+async def zip_status(job_id: str) -> dict[str, Any]:
+    job = ZIP_JOBS.get(job_id) if _JOB_ID.fullmatch(job_id) else None
+    if not job:
+        raise ServiceError(404, "unknown_job", "No ZIP job with that id.")
+    archive: ZipArchive = job["archive"]
+    return {
+        "total": job["total"],
+        "packed": len(archive.entries),
+        "failed": [item["trackId"] for item in archive.failed],
+        "done": job["done"],
+        "error": job.get("error"),
     }
 
 
@@ -503,12 +591,40 @@ async def download_zip(request: Request) -> StreamingResponse:
         raise ServiceError(400, "bad_body", "The ZIP request must be a JSON object.") from None
     name, tracks = _zip_tracks(payload)
 
-    archive = await _watched_build(tracks, request)
+    started = asyncio.Event()
+    paths: dict[str, Any] = {}
+    job_id = _job_id(payload)
+    if job_id:
+        _prune_jobs()
+        existing = ZIP_JOBS.get(job_id)
+        if existing is not None and not existing["done"]:
+            raise ServiceError(409, "duplicate_job", "A ZIP with this job id is already running.")
+
+    async def run() -> ZipArchive:
+        return await build_archive(
+            tracks, settings, _zip_source, started=started, note_failures=True, on_open=opened
+        )
+
+    def opened(info: dict[str, Any]) -> None:
+        paths.update(info)
+        if job_id:
+            ZIP_JOBS[job_id] = {"total": len(tracks), "archive": info["archive"], "done": False, "at": time.monotonic()}
+
+    task = asyncio.create_task(run())
+    if job_id:
+        def finished(t: asyncio.Task[ZipArchive]) -> None:
+            job = ZIP_JOBS.get(job_id)
+            if job:
+                job["done"] = True
+                job["finished_at"] = time.monotonic()
+                job["error"] = None if t.cancelled() or t.exception() is None else getattr(t.exception(), "message", "failed")
+        task.add_done_callback(finished)
+    await _first_entry(task, started, request)
     filename = zip_filename(name)
     return StreamingResponse(
-        stream_temp(archive.path, archive.tmpdir),
+        _stream_growing(task, paths["path"], paths["tmpdir"]),
         media_type="application/zip",
-        headers=_zip_headers(filename, archive),
+        headers=_zip_stream_headers(filename),
     )
 
 

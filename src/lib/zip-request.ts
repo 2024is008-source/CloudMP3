@@ -12,6 +12,7 @@ export type ZipTrackRequest = {
 
 export type ZipRequest = {
   name: string;
+  jobId?: string;
   tracks: ZipTrackRequest[];
 };
 
@@ -54,9 +55,11 @@ export function zipRequestBody(
   name: string,
   tracks: readonly { id: number }[],
   format: Format,
+  jobId?: string,
 ): ZipRequest {
   return {
     name: name.trim() || "CloudMP3-Playlist",
+    ...(jobId ? { jobId } : {}),
     tracks: tracks.map((track) => ({ id: track.id, ...zipSelection(format) })),
   };
 }
@@ -64,6 +67,10 @@ export function zipRequestBody(
 /** What the public ZIP route accepts from a browser before it reaches the service. */
 export const zipRequestSchema = z.object({
   name: z.string().trim().max(160).optional(),
+  jobId: z
+    .string()
+    .regex(/^[A-Za-z0-9_-]{16,64}$/)
+    .optional(),
   tracks: z
     .array(
       z.object({

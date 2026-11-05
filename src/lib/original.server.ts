@@ -183,6 +183,7 @@ const FORWARD_HEADERS = [
   "x-source-codec",
   "x-source-bitrate",
   "x-zip-tracks",
+  "x-zip-streaming",
   "x-zip-failed",
   "x-zip-failed-ids",
   "accept-ranges",
@@ -295,4 +296,22 @@ export async function proxyServiceZip(
   headers.set("Content-Type", "application/zip");
   headers.set("Cache-Control", "no-store");
   return new Response(upstream.body, { status: 200, headers });
+}
+
+/** Live progress of a streaming ZIP job: which tracks are packed and which failed. */
+export async function proxyServiceZipStatus(jobId: string): Promise<Response> {
+  const { url, key } = serviceConfig();
+  if (!url || !key) return new Response("Not configured", { status: 503 });
+  try {
+    const upstream = await serviceFetch(
+      `${url}/api/download/zip/status/${encodeURIComponent(jobId)}`,
+      { headers: { "X-Api-Key": key } },
+    );
+    return new Response(await upstream.text(), {
+      status: upstream.status,
+      headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+    });
+  } catch {
+    return new Response("The audio service is unreachable.", { status: 502 });
+  }
 }

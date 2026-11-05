@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import collections
 import contextlib
 import os
 import re
@@ -19,7 +20,7 @@ from errors import ServiceError
 from formats import MP3_BITRATES, ext_from_url, is_allowed_source
 from net_guard import UnsafeDestination, assert_safe_media_url, media_client
 
-CHUNK = 64 * 1024
+CHUNK = 256 * 1024
 NETWORK_TIMEOUT = httpx.Timeout(connect=30.0, read=120.0, write=30.0, pool=30.0)
 TEMP_PREFIX = "cloudmp3-"
 ARTWORK_TIMEOUT = httpx.Timeout(connect=15.0, read=30.0, write=15.0, pool=15.0)
@@ -195,48 +196,62 @@ async def stage_source(url: str, settings: Settings, tmpdir: str) -> str:
     if not segments:
         raise ServiceError(502, "download_failed", "SoundCloud sent no audio for this track.")
 
-    # Concurrently fetch segments with a sliding window over pooled keep-alive connections
-    WINDOW = 8
-    sem = asyncio.Semaphore(WINDOW)
-    async with media_client(NETWORK_TIMEOUT, headers={"User-Agent": settings.user_agent}) as client:
-        async def fetch_one(seg_url: str) -> bytes:
-            async with sem:
-                for attempt in range(2):
-                    try:
-                        resp = await client.get(seg_url)
-                        if resp.status_code == 200:
-                            return resp.content
-                    except httpx.HTTPError:
-                        if attempt == 1:
-                            raise ServiceError(
-                                502,
-                                "download_failed",
-                                "The original file could not be streamed from SoundCloud.",
-                            )
-                raise ServiceError(
-                    502,
-                    "download_failed",
-                    "The original file could not be streamed from SoundCloud.",
-                )
-
-        chunks = await asyncio.gather(*(fetch_one(s) for s in segments))
-
+    # Fetch segments concurrently over pooled keep-alive connections, but write
+    # them to disk in playlist order as they arrive. Only the window is held in
+    # memory, not the whole track.
+    window = max(1, settings.hls_window)
     written = 0
-    try:
-        async with await anyio.open_file(dest, mode="wb") as file:
-            for chunk in chunks:
-                written += len(chunk)
-                if written > settings.max_convert_bytes:
-                    raise ServiceError(
-                        413,
-                        "download_too_large",
-                        "This track is larger than the limit set on this server.",
-                    )
-                await file.write(chunk)
-    except BaseException:
-        with contextlib.suppress(OSError):
-            os.remove(dest)
-        raise
+    pending: collections.deque[asyncio.Task[bytes]] = collections.deque()
+    todo = iter(segments)
+
+    async with media_client(
+        NETWORK_TIMEOUT,
+        headers={"User-Agent": settings.user_agent},
+        limits=httpx.Limits(max_connections=window, max_keepalive_connections=window),
+    ) as client:
+
+        async def fetch_one(seg_url: str) -> bytes:
+            for attempt in range(2):
+                try:
+                    resp = await client.get(seg_url)
+                    if resp.status_code == 200:
+                        return resp.content
+                except httpx.HTTPError:
+                    pass
+            raise ServiceError(
+                502,
+                "download_failed",
+                "The original file could not be streamed from SoundCloud.",
+            )
+
+        def top_up() -> None:
+            while len(pending) < window:
+                seg = next(todo, None)
+                if seg is None:
+                    return
+                pending.append(asyncio.create_task(fetch_one(seg)))
+
+        try:
+            async with await anyio.open_file(dest, mode="wb") as file:
+                top_up()
+                while pending:
+                    chunk = await pending.popleft()
+                    top_up()
+                    written += len(chunk)
+                    if written > settings.max_convert_bytes:
+                        raise ServiceError(
+                            413,
+                            "download_too_large",
+                            "This track is larger than the limit set on this server.",
+                        )
+                    await file.write(chunk)
+        except BaseException:
+            for task in pending:
+                task.cancel()
+            await asyncio.gather(*pending, return_exceptions=True)
+            with contextlib.suppress(OSError):
+                os.remove(dest)
+            raise
     if written == 0:
         raise ServiceError(502, "download_failed", "SoundCloud sent no audio for this track.")
     return dest
@@ -462,8 +477,18 @@ async def _convert_mp3(
 ) -> tuple[str, str, int]:
     tmpdir = tempfile.mkdtemp(prefix=TEMP_PREFIX)
     output = os.path.join(tmpdir, "converted.mp3")
-    source = await _stage(url, settings, tmpdir)
-    cover = await _fetch_artwork(artwork_url, tmpdir, settings) if artwork_url else None
+    # The cover and the audio come from different hosts; fetch them together.
+    cover_task = (
+        asyncio.create_task(_fetch_artwork(artwork_url, tmpdir, settings)) if artwork_url else None
+    )
+    try:
+        source = await _stage(url, settings, tmpdir)
+    except BaseException:
+        if cover_task is not None:
+            cover_task.cancel()
+            await asyncio.gather(cover_task, return_exceptions=True)
+        raise
+    cover = await cover_task if cover_task is not None else None
     args = _mp3_args(binary, source, output, bitrate, metadata, cover)
     size = await _run_ffmpeg(args, output, tmpdir, settings, 0)
     return output, tmpdir, size

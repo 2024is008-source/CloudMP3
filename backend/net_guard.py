@@ -215,6 +215,7 @@ def media_client(
     headers: dict[str, str] | None = None,
     max_redirects: int = MAX_REDIRECTS,
     transport: httpx.AsyncBaseTransport | None = None,
+    limits: httpx.Limits | None = None,
 ) -> httpx.AsyncClient:
     """An HTTP client that cannot be pointed anywhere the policy forbids.
 
@@ -228,6 +229,7 @@ def media_client(
         timeout=timeout,
         headers=headers,
         transport=transport,
+        limits=limits if limits is not None else httpx.Limits(),
         follow_redirects=True,
         max_redirects=max_redirects,
         event_hooks={"request": [_guard_request]},
