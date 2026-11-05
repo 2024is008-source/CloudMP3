@@ -1,0 +1,1635 @@
+{
+ "url": "http://localhost:8081/track/2430014466",
+ "at": "2026-11-02T14:15:40.838Z",
+ "allow": [],
+ "viewports": [
+  {
+   "width": 1440,
+   "height": 900,
+   "load": "load",
+   "screens": 3,
+   "filled": [
+    0.63,
+    0.4,
+    0.59
+   ],
+   "motion": {
+    "elements": 9,
+    "css": 8,
+    "transitions": 1,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "page": {
+     "height": 2411,
+     "screens": 2.7,
+     "words": 360,
+     "img": 8,
+     "video": 0,
+     "canvas": 0,
+     "svg": 25,
+     "sections": 5,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 1,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [
+      "artworks-6lNt0E44flNh1CSY-QicwmA-t500x500.jpg"
+     ],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Out Of Synth - Electro Music Humans.wav",
+     "words": 7,
+     "chars": 39,
+     "lines": 2,
+     "size": 52,
+     "vw": 3.6,
+     "font": "Space Grotesk",
+     "weight": 700,
+     "tracking": -0.02,
+     "leading": 1.06,
+     "top": 247,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Out Of Synth - Electro Music Humans.wav",
+     "words": 7,
+     "lines": 2,
+     "size": 52,
+     "font": "Space Grotesk"
+    },
+    "headings": [
+     {
+      "text": "Out Of Synth - Electro Music Humans.wav",
+      "words": 7,
+      "chars": 39,
+      "lines": 2,
+      "size": 52,
+      "vw": 3.6,
+      "font": "Space Grotesk",
+      "weight": 700,
+      "tracking": -0.025,
+      "leading": 1.06,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.49,
+      "top": 247,
+      "tag": "h1",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 1,
+     "maxLines": 2,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": null,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Inter",
+       "share": 0.94,
+       "mono": false
+      },
+      {
+       "family": "Space Grotesk",
+       "share": 0.05,
+       "mono": false
+      },
+      {
+       "family": "ui-monospace",
+       "share": 0.01,
+       "mono": false
+      }
+     ],
+     "familyCount": 3,
+     "sizes": [
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      18,
+      20,
+      52
+     ],
+     "sizeCount": 9,
+     "notLoaded": [],
+     "body": {
+      "font": "Inter",
+      "size": 11,
+      "leading": 1.63,
+      "weight": 400,
+      "tracking": 0,
+      "contrast": null
+     },
+     "measureChars": 64,
+     "max": {
+      "size": 52,
+      "vw": 3.6,
+      "font": "Space Grotesk",
+      "text": "Out Of Synth - Electro Music Humans.wav"
+     },
+     "monoShare": 0.01,
+     "monoProseShare": 0.01,
+     "monoFamilies": [
+      "ui-monospace"
+     ],
+     "monoSamples": [
+      "AAC",
+      "160 kbps",
+      "≈ 6.2 MB"
+     ],
+     "microLabels": 5,
+     "microLabelShare": 0.03,
+     "microSamples": [
+      "Original",
+      "Preview",
+      "Stream authorized",
+      "Format",
+      "More from Electro Music Humans"
+     ],
+     "upperShare": 0.08,
+     "centerShare": 0.01,
+     "smallText": 22
+    },
+    "eyebrows": [
+     {
+      "text": "Original",
+      "above": "Out Of Synth - Electro Music Humans.wav",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 11,
+      "top": 204
+     }
+    ],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#090b0f",
+     "bodyBgHsl": {
+      "h": 220,
+      "s": 0.25,
+      "l": 0.05
+     },
+     "dark": true,
+     "sectionBgs": [
+      {
+       "color": "#14171d",
+       "top": 154,
+       "hsl": {
+        "h": 220,
+        "s": 0.18,
+        "l": 0.1
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#9298a3",
+       "share": 0.67
+      },
+      {
+       "color": "#f5f5f5",
+       "share": 0.26
+      },
+      {
+       "color": "#ff7416",
+       "share": 0.06
+      },
+      {
+       "color": "#090b0f",
+       "share": 0.02
+      }
+     ],
+     "button": {
+      "bg": "#ff7416",
+      "hsl": {
+       "h": 24,
+       "s": 1,
+       "l": 0.54
+      },
+      "fg": "#090b0f"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 10,
+     "inHero": 3,
+     "radius": 20,
+     "height": 66,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Back to downloader",
+      "Download",
+      "Listen on SoundCloud"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 7,
+     "shadowOverlay": 0,
+     "shadowSamples": [
+      "header.track-glow.relative → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "div.relative.aspect-square → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "a.inline-flex.items-center → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "section.rounded-2xl.border → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0"
+     ],
+     "gradients": 1,
+     "scrims": 0,
+     "gradientSamples": [
+      "header.track-glow.relative → radial-gradient(60% 90% at 12% 0%, oklab(0.715 0.131189 0.140191 / 0.2), rgba(0, 0, 0, 0) 70%), radial-gradien"
+     ],
+     "gradientText": 0,
+     "hairlines": 16,
+     "hairlineSamples": [
+      "div.mt-3.flex 1070px",
+      "div.grid.grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)] 350px",
+      "div.grid.grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)] 350px",
+      "div.grid.grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)] 350px",
+      "div.grid.grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)] 350px"
+     ],
+     "outlinedBoxes": 5,
+     "dashed": 0,
+     "blurred": 3,
+     "roundedBoxes": 6,
+     "boxRadius": 28,
+     "squareMedia": 0,
+     "roundedMedia": 1,
+     "mediaRadius": 24,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 5,
+     "fixed": true,
+     "height": 65,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "inter",
+     "space grotesk"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "pageH": 2411,
+    "margins": {
+     "left": 160,
+     "right": 185
+    },
+    "sections": [
+     {
+      "sel": "div.flex-1.pt-16",
+      "tag": "div",
+      "top": 0,
+      "height": 1976,
+      "words": 278,
+      "media": 1,
+      "middle": 0,
+      "heading": {
+       "text": "Out Of Synth - Electro Music Humans.wav",
+       "size": 52,
+       "tag": "h1"
+      },
+      "left": 160,
+      "right": 160,
+      "textLeft": 160,
+      "textRight": 160,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "footer.mt-20.border-t",
+      "tag": "footer",
+      "top": 2056,
+      "height": 355,
+      "words": 81,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Navigation",
+       "size": 14,
+       "tag": "h2"
+      },
+      "left": 160,
+      "right": 210,
+      "textLeft": 160,
+      "textRight": 210,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Out Of Synth - Electro Music Humans.wav",
+      "size": 52,
+      "top": 247,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 185,
+      "n": 1
+     },
+     {
+      "x": 200,
+      "n": 1
+     },
+     {
+      "x": 533,
+      "n": 1
+     },
+     {
+      "x": 905,
+      "n": 1
+     }
+    ],
+    "leftBlocks": 4,
+    "bodySize": 14,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0.11,
+    "voidBox": {
+     "x": 0,
+     "y": 120,
+     "w": 180,
+     "h": 780
+    }
+   },
+   "app": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "dark": true,
+    "ground": "#090b0f",
+    "sidebar": null,
+    "topbar": {
+     "h": 65
+    },
+    "canvas": {
+     "left": 168,
+     "right": 160
+    },
+    "hero": {
+     "text": "Out Of Synth - Electro Music Humans.wav",
+     "words": 7,
+     "chars": 39,
+     "lines": 2,
+     "size": 52,
+     "vw": 3.6,
+     "font": "Space Grotesk",
+     "weight": 700,
+     "tracking": -0.02,
+     "leading": 1.06,
+     "top": 247,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 4,
+     "firstScreen": 4,
+     "ragged": [
+      {
+       "diff": 501,
+       "top": 779
+      }
+     ],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 5,
+     "radii": [
+      [
+       28,
+       3
+      ],
+      [
+       24,
+       1
+      ],
+      [
+       0,
+       1
+      ]
+     ],
+     "heavyBorders": 0,
+     "borderSamples": [],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 3
+    },
+    "chips": {
+     "count": 2,
+     "hues": 1,
+     "samples": [
+      {
+       "hue": 24,
+       "size": 56,
+       "radius": "3.35544e+07px"
+      },
+      {
+       "hue": 25,
+       "size": 32,
+       "radius": "3.35544e+07px"
+      }
+     ]
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 0,
+     "tabularShare": null,
+     "kpiMax": null
+    },
+    "rows": null,
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.45,
+     "tiny": 7,
+     "tinySamples": [
+      "Stream authorized 10px",
+      "REMIX 9px",
+      "ORIGINAL 9px",
+      "ORIGINAL 9px"
+     ],
+     "sizes": [
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      18,
+      20,
+      52
+     ]
+    },
+    "title": {
+     "text": "Out Of Synth - Electro Music Humans.wav",
+     "size": 52,
+     "top": 247
+    },
+    "colourShare": 0.029
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 768,
+   "height": 1024,
+   "load": "load",
+   "screens": 4,
+   "filled": [
+    0.82,
+    0.9,
+    0.71,
+    0.82
+   ],
+   "motion": {
+    "elements": 9,
+    "css": 8,
+    "transitions": 1,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "page": {
+     "height": 3273,
+     "screens": 3.2,
+     "words": 360,
+     "img": 8,
+     "video": 0,
+     "canvas": 0,
+     "svg": 25,
+     "sections": 5,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 1,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [
+      "artworks-6lNt0E44flNh1CSY-QicwmA-t500x500.jpg"
+     ],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Out Of Synth - Electro Music Humans.wav",
+     "words": 7,
+     "chars": 39,
+     "lines": 2,
+     "size": 36,
+     "vw": 4.7,
+     "font": "Space Grotesk",
+     "weight": 700,
+     "tracking": -0.02,
+     "leading": 1.06,
+     "top": 598,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Out Of Synth - Electro Music Humans.wav",
+     "words": 7,
+     "lines": 2,
+     "size": 36,
+     "font": "Space Grotesk"
+    },
+    "headings": [
+     {
+      "text": "Out Of Synth - Electro Music Humans.wav",
+      "words": 7,
+      "chars": 39,
+      "lines": 2,
+      "size": 36,
+      "vw": 4.7,
+      "font": "Space Grotesk",
+      "weight": 700,
+      "tracking": -0.025,
+      "leading": 1.06,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.87,
+      "top": 598,
+      "tag": "h1",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 1,
+     "maxLines": 2,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": null,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Inter",
+       "share": 0.94,
+       "mono": false
+      },
+      {
+       "family": "Space Grotesk",
+       "share": 0.05,
+       "mono": false
+      },
+      {
+       "family": "ui-monospace",
+       "share": 0.01,
+       "mono": false
+      }
+     ],
+     "familyCount": 3,
+     "sizes": [
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      18,
+      20,
+      36
+     ],
+     "sizeCount": 9,
+     "notLoaded": [],
+     "body": {
+      "font": "Inter",
+      "size": 11,
+      "leading": 1.63,
+      "weight": 400,
+      "tracking": 0,
+      "contrast": null
+     },
+     "measureChars": 125,
+     "max": {
+      "size": 36,
+      "vw": 4.7,
+      "font": "Space Grotesk",
+      "text": "Out Of Synth - Electro Music Humans.wav"
+     },
+     "monoShare": 0.01,
+     "monoProseShare": 0.01,
+     "monoFamilies": [
+      "ui-monospace"
+     ],
+     "monoSamples": [
+      "AAC",
+      "160 kbps",
+      "≈ 6.2 MB"
+     ],
+     "microLabels": 5,
+     "microLabelShare": 0.03,
+     "microSamples": [
+      "Original",
+      "Preview",
+      "Stream authorized",
+      "Format",
+      "More from Electro Music Humans"
+     ],
+     "upperShare": 0.08,
+     "centerShare": 0.01,
+     "smallText": 22
+    },
+    "eyebrows": [
+     {
+      "text": "Original",
+      "above": "Out Of Synth - Electro Music Humans.wav",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 11,
+      "top": 555
+     }
+    ],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#090b0f",
+     "bodyBgHsl": {
+      "h": 220,
+      "s": 0.25,
+      "l": 0.05
+     },
+     "dark": true,
+     "sectionBgs": [
+      {
+       "color": "#14171d",
+       "top": 154,
+       "hsl": {
+        "h": 220,
+        "s": 0.18,
+        "l": 0.1
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#9298a3",
+       "share": 0.67
+      },
+      {
+       "color": "#f5f5f5",
+       "share": 0.26
+      },
+      {
+       "color": "#ff7416",
+       "share": 0.06
+      },
+      {
+       "color": "#090b0f",
+       "share": 0.02
+      }
+     ],
+     "button": {
+      "bg": "#ff7416",
+      "hsl": {
+       "h": 24,
+       "s": 1,
+       "l": 0.54
+      },
+      "fg": "#090b0f"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 10,
+     "inHero": 3,
+     "radius": 20,
+     "height": 66,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Back to downloader",
+      "Download",
+      "Listen on SoundCloud"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 7,
+     "shadowOverlay": 0,
+     "shadowSamples": [
+      "header.track-glow.relative → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "div.relative.aspect-square → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "a.inline-flex.items-center → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "section.rounded-2xl.border → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0"
+     ],
+     "gradients": 1,
+     "scrims": 0,
+     "gradientSamples": [
+      "header.track-glow.relative → radial-gradient(60% 90% at 12% 0%, oklab(0.715 0.131189 0.140191 / 0.2), rgba(0, 0, 0, 0) 70%), radial-gradien"
+     ],
+     "gradientText": 0,
+     "hairlines": 16,
+     "hairlineSamples": [
+      "div.mt-3.flex 686px",
+      "div.grid.grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)] 686px",
+      "div.grid.grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)] 686px",
+      "div.grid.grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)] 686px",
+      "div.grid.grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)] 686px"
+     ],
+     "outlinedBoxes": 5,
+     "dashed": 0,
+     "blurred": 3,
+     "roundedBoxes": 6,
+     "boxRadius": 28,
+     "squareMedia": 0,
+     "roundedMedia": 1,
+     "mediaRadius": 24,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [
+     {
+      "type": "img",
+      "ratio": 0.14
+     }
+    ],
+    "nav": {
+     "links": 5,
+     "fixed": true,
+     "height": 65,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "inter",
+     "space grotesk"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "pageH": 3273,
+    "margins": {
+     "left": 16,
+     "right": 41
+    },
+    "sections": [
+     {
+      "sel": "div.flex-1.pt-16",
+      "tag": "div",
+      "top": 0,
+      "height": 2659,
+      "words": 278,
+      "media": 1,
+      "middle": 0,
+      "heading": {
+       "text": "Out Of Synth - Electro Music Humans.wav",
+       "size": 36,
+       "tag": "h1"
+      },
+      "left": 16,
+      "right": 16,
+      "textLeft": 16,
+      "textRight": 16,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "footer.mt-20.border-t",
+      "tag": "footer",
+      "top": 2739,
+      "height": 535,
+      "words": 81,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Navigation",
+       "size": 14,
+       "tag": "h2"
+      },
+      "left": 16,
+      "right": 24,
+      "textLeft": 16,
+      "textRight": 24,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Out Of Synth - Electro Music Humans.wav",
+      "size": 36,
+      "top": 598,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 41,
+      "n": 3
+     },
+     {
+      "x": 56,
+      "n": 1
+     }
+    ],
+    "leftBlocks": 4,
+    "bodySize": 14,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "dark": true,
+    "ground": "#090b0f",
+    "sidebar": null,
+    "topbar": {
+     "h": 65
+    },
+    "canvas": {
+     "left": 16,
+     "right": 16
+    },
+    "hero": {
+     "text": "Out Of Synth - Electro Music Humans.wav",
+     "words": 7,
+     "chars": 39,
+     "lines": 2,
+     "size": 36,
+     "vw": 4.7,
+     "font": "Space Grotesk",
+     "weight": 700,
+     "tracking": -0.02,
+     "leading": 1.06,
+     "top": 598,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 4,
+     "firstScreen": 2,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 5,
+     "radii": [
+      [
+       28,
+       3
+      ],
+      [
+       24,
+       1
+      ],
+      [
+       0,
+       1
+      ]
+     ],
+     "heavyBorders": 0,
+     "borderSamples": [],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 3
+    },
+    "chips": {
+     "count": 2,
+     "hues": 1,
+     "samples": [
+      {
+       "hue": 24,
+       "size": 56,
+       "radius": "3.35544e+07px"
+      },
+      {
+       "hue": 25,
+       "size": 32,
+       "radius": "3.35544e+07px"
+      }
+     ]
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 0,
+     "tabularShare": null,
+     "kpiMax": null
+    },
+    "rows": null,
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.45,
+     "tiny": 7,
+     "tinySamples": [
+      "Stream authorized 10px",
+      "REMIX 9px",
+      "ORIGINAL 9px",
+      "ORIGINAL 9px"
+     ],
+     "sizes": [
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      18,
+      20,
+      36
+     ]
+    },
+    "title": {
+     "text": "Out Of Synth - Electro Music Humans.wav",
+     "size": 36,
+     "top": 598
+    },
+    "colourShare": 0.042
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 390,
+   "height": 844,
+   "load": "load",
+   "screens": 5,
+   "filled": [
+    0.82,
+    0.92,
+    0.93,
+    0.67,
+    1
+   ],
+   "motion": {
+    "elements": 9,
+    "css": 8,
+    "transitions": 1,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "page": {
+     "height": 4141,
+     "screens": 4.9,
+     "words": 350,
+     "img": 8,
+     "video": 0,
+     "canvas": 0,
+     "svg": 25,
+     "sections": 5,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 1,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [
+      "artworks-6lNt0E44flNh1CSY-QicwmA-t500x500.jpg"
+     ],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Out Of Synth - Electro Music Humans.wav",
+     "words": 7,
+     "chars": 39,
+     "lines": 2,
+     "size": 30,
+     "vw": 7.7,
+     "font": "Space Grotesk",
+     "weight": 700,
+     "tracking": -0.02,
+     "leading": 1.06,
+     "top": 550,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Out Of Synth - Electro Music Humans.wav",
+     "words": 7,
+     "lines": 2,
+     "size": 30,
+     "font": "Space Grotesk"
+    },
+    "headings": [
+     {
+      "text": "Out Of Synth - Electro Music Humans.wav",
+      "words": 7,
+      "chars": 39,
+      "lines": 2,
+      "size": 30,
+      "vw": 7.7,
+      "font": "Space Grotesk",
+      "weight": 700,
+      "tracking": -0.025,
+      "leading": 1.06,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.81,
+      "top": 550,
+      "tag": "h1",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 1,
+     "maxLines": 2,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": null,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Inter",
+       "share": 0.94,
+       "mono": false
+      },
+      {
+       "family": "Space Grotesk",
+       "share": 0.05,
+       "mono": false
+      },
+      {
+       "family": "ui-monospace",
+       "share": 0.01,
+       "mono": false
+      }
+     ],
+     "familyCount": 3,
+     "sizes": [
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      18,
+      20,
+      30
+     ],
+     "sizeCount": 9,
+     "notLoaded": [],
+     "body": {
+      "font": "Inter",
+      "size": 11,
+      "leading": 1.63,
+      "weight": 400,
+      "tracking": 0,
+      "contrast": null
+     },
+     "measureChars": 57,
+     "max": {
+      "size": 30,
+      "vw": 7.7,
+      "font": "Space Grotesk",
+      "text": "Out Of Synth - Electro Music Humans.wav"
+     },
+     "monoShare": 0.01,
+     "monoProseShare": 0.01,
+     "monoFamilies": [
+      "ui-monospace"
+     ],
+     "monoSamples": [
+      "AAC",
+      "160 kbps",
+      "≈ 6.2 MB"
+     ],
+     "microLabels": 5,
+     "microLabelShare": 0.031,
+     "microSamples": [
+      "Original",
+      "Preview",
+      "Stream authorized",
+      "Format",
+      "More from Electro Music Humans"
+     ],
+     "upperShare": 0.08,
+     "centerShare": 0.01,
+     "smallText": 22
+    },
+    "eyebrows": [
+     {
+      "text": "Original",
+      "above": "Out Of Synth - Electro Music Humans.wav",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 11,
+      "top": 507
+     }
+    ],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#090b0f",
+     "bodyBgHsl": {
+      "h": 220,
+      "s": 0.25,
+      "l": 0.05
+     },
+     "dark": true,
+     "sectionBgs": [
+      {
+       "color": "#14171d",
+       "top": 138,
+       "hsl": {
+        "h": 220,
+        "s": 0.18,
+        "l": 0.1
+       }
+      },
+      {
+       "color": "#1b1f26",
+       "top": 159,
+       "hsl": {
+        "h": 218,
+        "s": 0.17,
+        "l": 0.13
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#9298a3",
+       "share": 0.66
+      },
+      {
+       "color": "#f5f5f5",
+       "share": 0.27
+      },
+      {
+       "color": "#ff7416",
+       "share": 0.06
+      },
+      {
+       "color": "#090b0f",
+       "share": 0.02
+      }
+     ],
+     "button": {
+      "bg": "#ff7416",
+      "hsl": {
+       "h": 24,
+       "s": 1,
+       "l": 0.54
+      },
+      "fg": "#090b0f"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 10,
+     "inHero": 3,
+     "radius": 20,
+     "height": 66,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Back to downloader",
+      "Download",
+      "Listen on SoundCloud"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 7,
+     "shadowOverlay": 0,
+     "shadowSamples": [
+      "header.track-glow.relative → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "div.relative.aspect-square → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "a.inline-flex.items-center → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "section.rounded-2xl.border → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0"
+     ],
+     "gradients": 1,
+     "scrims": 0,
+     "gradientSamples": [
+      "header.track-glow.relative → radial-gradient(60% 90% at 12% 0%, oklab(0.715 0.131189 0.140191 / 0.2), rgba(0, 0, 0, 0) 70%), radial-gradien"
+     ],
+     "gradientText": 0,
+     "hairlines": 16,
+     "hairlineSamples": [
+      "div.mt-3.flex 316px",
+      "div.grid.grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)] 316px",
+      "div.grid.grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)] 316px",
+      "div.grid.grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)] 316px",
+      "div.grid.grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)] 316px"
+     ],
+     "outlinedBoxes": 5,
+     "dashed": 0,
+     "blurred": 3,
+     "roundedBoxes": 6,
+     "boxRadius": 28,
+     "squareMedia": 0,
+     "roundedMedia": 1,
+     "mediaRadius": 24,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [
+     {
+      "type": "img",
+      "ratio": 0.3
+     }
+    ],
+    "nav": {
+     "links": 1,
+     "fixed": true,
+     "height": 65,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "inter",
+     "space grotesk"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "pageH": 4141,
+    "margins": {
+     "left": 16,
+     "right": 37
+    },
+    "sections": [
+     {
+      "sel": "div.flex-1.pt-16",
+      "tag": "div",
+      "top": 0,
+      "height": 3175,
+      "words": 278,
+      "media": 1,
+      "middle": 0,
+      "heading": {
+       "text": "Out Of Synth - Electro Music Humans.wav",
+       "size": 30,
+       "tag": "h1"
+      },
+      "left": 16,
+      "right": 16,
+      "textLeft": 16,
+      "textRight": 16,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "footer.mt-20.border-t",
+      "tag": "footer",
+      "top": 3255,
+      "height": 886,
+      "words": 81,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Navigation",
+       "size": 14,
+       "tag": "h2"
+      },
+      "left": 16,
+      "right": 29,
+      "textLeft": 16,
+      "textRight": 29,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Out Of Synth - Electro Music Humans.wav",
+      "size": 30,
+      "top": 550,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 37,
+      "n": 3
+     },
+     {
+      "x": 56,
+      "n": 1
+     }
+    ],
+    "leftBlocks": 4,
+    "bodySize": 14,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "dark": true,
+    "ground": "#090b0f",
+    "sidebar": null,
+    "topbar": {
+     "h": 65
+    },
+    "canvas": {
+     "left": 16,
+     "right": 10
+    },
+    "hero": {
+     "text": "Out Of Synth - Electro Music Humans.wav",
+     "words": 7,
+     "chars": 39,
+     "lines": 2,
+     "size": 30,
+     "vw": 7.7,
+     "font": "Space Grotesk",
+     "weight": 700,
+     "tracking": -0.02,
+     "leading": 1.06,
+     "top": 550,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 4,
+     "firstScreen": 1,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 6,
+     "radii": [
+      [
+       28,
+       3
+      ],
+      [
+       0,
+       2
+      ],
+      [
+       24,
+       1
+      ]
+     ],
+     "heavyBorders": 0,
+     "borderSamples": [],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 3
+    },
+    "chips": {
+     "count": 2,
+     "hues": 1,
+     "samples": [
+      {
+       "hue": 24,
+       "size": 56,
+       "radius": "3.35544e+07px"
+      },
+      {
+       "hue": 25,
+       "size": 32,
+       "radius": "3.35544e+07px"
+      }
+     ]
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 0,
+     "tabularShare": null,
+     "kpiMax": null
+    },
+    "rows": null,
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.45,
+     "tiny": 7,
+     "tinySamples": [
+      "Stream authorized 10px",
+      "REMIX 9px",
+      "ORIGINAL 9px",
+      "ORIGINAL 9px"
+     ],
+     "sizes": [
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      18,
+      20,
+      30
+     ]
+    },
+    "title": {
+     "text": "Out Of Synth - Electro Music Humans.wav",
+     "size": 30,
+     "top": 550
+    },
+    "colourShare": 0.083
+   },
+   "consoleErrors": []
+  }
+ ],
+ "findings": [
+  {
+   "level": "FAIL",
+   "id": "micro-label",
+   "width": 1440,
+   "message": "5 tiny uppercase letter-spaced labels (e.g. \"Original\", \"Preview\", \"Stream authorized\", \"Format\").",
+   "fix": "Use sentence-case text at a readable size, or delete the label.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "gradient",
+   "width": 1440,
+   "message": "1 gradient fill(s): header.track-glow.relative → radial-gradient(60% 90% at 12% 0%, oklab(0.715 0.131189 0.140191 / 0.2), rgba(0, 0, 0, 0) 70%), radial-gradien",
+   "fix": "Use a flat colour or a real image. The only gradient allowed by default is a neutral scrim over a photo for legibility.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "tiny-text",
+   "width": 1440,
+   "message": "7 text blocks under 11px: Stream authorized 10px, REMIX 9px, ORIGINAL 9px, ORIGINAL 9px.",
+   "fix": "Nothing below 11px; secondary text 12px, data 13–14px.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "WARN",
+   "id": "ragged-row",
+   "width": 1440,
+   "message": "1 pair(s) of cards in one row end at different heights (by 501px).",
+   "fix": "Cards that share a row share a bottom edge: balance them by their content (the same number of rows, a block of similar height beside it), or stack them. In testing, ragged rows were marked down every time."
+  },
+  {
+   "level": "WARN",
+   "id": "app-title-size",
+   "width": 1440,
+   "message": "The h1 is 52px (\"Out Of Synth - Electro Music Humans.wav\").",
+   "fix": "An app screen is not a landing page: the title is 18-32px (20-24px on a phone).",
+   "alsoAt": [
+    768,
+    390
+   ]
+  }
+ ],
+ "images": [
+  {
+   "viewport": "desktop",
+   "width": 1440,
+   "fold": "D:\\code-archive-unpacker-main(2)\\code-archive-unpacker-main\\.taste-skill\\before-track\\desktop-fold.jpg",
+   "pages": [
+    "D:\\code-archive-unpacker-main(2)\\code-archive-unpacker-main\\.taste-skill\\before-track\\desktop-page-01.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "tablet",
+   "width": 768,
+   "fold": "D:\\code-archive-unpacker-main(2)\\code-archive-unpacker-main\\.taste-skill\\before-track\\tablet-fold.jpg",
+   "pages": [
+    "D:\\code-archive-unpacker-main(2)\\code-archive-unpacker-main\\.taste-skill\\before-track\\tablet-page-01.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "mobile",
+   "width": 390,
+   "fold": "D:\\code-archive-unpacker-main(2)\\code-archive-unpacker-main\\.taste-skill\\before-track\\mobile-fold.jpg",
+   "pages": [
+    "D:\\code-archive-unpacker-main(2)\\code-archive-unpacker-main\\.taste-skill\\before-track\\mobile-page-01.jpg"
+   ],
+   "film": []
+  }
+ ]
+}

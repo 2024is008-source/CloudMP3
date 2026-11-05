@@ -1,0 +1,1385 @@
+{
+ "url": "http://localhost:8081/",
+ "at": "2026-11-02T14:14:45.016Z",
+ "allow": [],
+ "viewports": [
+  {
+   "width": 1440,
+   "height": 900,
+   "load": "load",
+   "screens": 3,
+   "filled": [
+    0.33,
+    0.47,
+    0.63
+   ],
+   "motion": {
+    "elements": 65,
+    "css": 64,
+    "transitions": 1,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "page": {
+     "height": 2605,
+     "screens": 2.9,
+     "words": 408,
+     "img": 0,
+     "video": 0,
+     "canvas": 0,
+     "svg": 24,
+     "sections": 5,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "SoundCloud to MP3",
+     "words": 3,
+     "chars": 17,
+     "lines": 1,
+     "size": 60,
+     "vw": 4.2,
+     "font": "Space Grotesk",
+     "weight": 700,
+     "tracking": -0.025,
+     "leading": 1.05,
+     "upper": false,
+     "italic": false,
+     "mono": false,
+     "align": "center",
+     "position": "center",
+     "widthRatio": 0.47,
+     "top": 255,
+     "gradientText": true,
+     "tag": "h1",
+     "kind": "heading"
+    },
+    "h1": {
+     "text": "SoundCloud to MP3",
+     "words": 3,
+     "lines": 1,
+     "size": 60,
+     "font": "Space Grotesk"
+    },
+    "headings": [
+     {
+      "text": "SoundCloud to MP3",
+      "words": 3,
+      "chars": 17,
+      "lines": 1,
+      "size": 60,
+      "vw": 4.2,
+      "font": "Space Grotesk",
+      "weight": 700,
+      "tracking": -0.025,
+      "leading": 1.05,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.47,
+      "top": 255,
+      "gradientText": true,
+      "tag": "h1",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 1,
+     "maxLines": 1,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 1,
+     "medianWords": null,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Inter",
+       "share": 0.91,
+       "mono": false
+      },
+      {
+       "family": "Space Grotesk",
+       "share": 0.09,
+       "mono": false
+      }
+     ],
+     "familyCount": 2,
+     "sizes": [
+      12,
+      14,
+      16,
+      18,
+      24,
+      60
+     ],
+     "sizeCount": 6,
+     "notLoaded": [],
+     "body": {
+      "font": "Inter",
+      "size": 14,
+      "leading": 1.43,
+      "weight": 400,
+      "tracking": 0,
+      "contrast": 6.2
+     },
+     "measureChars": 187,
+     "max": {
+      "size": 60,
+      "vw": 4.2,
+      "font": "Space Grotesk",
+      "text": "SoundCloud"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0,
+     "centerShare": 0.09,
+     "smallText": 5
+    },
+    "eyebrows": [
+     {
+      "text": "No sign-up · no app · no queue",
+      "above": "SoundCloud to MP3",
+      "upper": false,
+      "tracked": false,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 213
+     }
+    ],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#090b0f",
+     "bodyBgHsl": {
+      "h": 220,
+      "s": 0.25,
+      "l": 0.05
+     },
+     "dark": true,
+     "sectionBgs": [],
+     "textColors": [
+      {
+       "color": "#9298a3",
+       "share": 0.68
+      },
+      {
+       "color": "#f5f5f5",
+       "share": 0.28
+      },
+      {
+       "color": "#ff7416",
+       "share": 0.04
+      },
+      {
+       "color": "#090b0f",
+       "share": 0
+      }
+     ],
+     "button": {
+      "bg": "#ff7416",
+      "hsl": {
+       "h": 24,
+       "s": 1,
+       "l": 0.54
+      },
+      "fg": "#090b0f"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 2,
+     "inHero": 2,
+     "radius": "pill",
+     "height": 40,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Paste",
+      "Fetch"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 2,
+     "shadowOverlay": 0,
+     "shadowSamples": [
+      "span.flex.h-9 → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "form.rise-in.mt-8 → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0"
+     ],
+     "gradients": 1,
+     "scrims": 0,
+     "gradientSamples": [
+      "div.hero-glow.absolute → radial-gradient(60% 70% at 50% 0%, oklab(0.715 0.131189 0.140191 / 0.35), rgba(0, 0, 0, 0) 70%)"
+     ],
+     "gradientText": 1,
+     "hairlines": 2,
+     "hairlineSamples": [
+      "footer.mt-20.border-t 1440px",
+      "div.border-t.border-border/60 1440px"
+     ],
+     "outlinedBoxes": 10,
+     "dashed": 0,
+     "blurred": 1,
+     "roundedBoxes": 11,
+     "boxRadius": 24,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": [
+      {
+       "count": 4,
+       "iconTopped": true,
+       "rounded": true,
+       "top": 664
+      },
+      {
+       "count": 6,
+       "iconTopped": true,
+       "rounded": true,
+       "top": 1092
+      }
+     ]
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 5,
+     "fixed": true,
+     "height": 65,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "inter",
+     "space grotesk"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "pageH": 2605,
+    "margins": {
+     "left": 174,
+     "right": 232
+    },
+    "sections": [
+     {
+      "sel": "div.flex-1.pt-16",
+      "tag": "div",
+      "top": 0,
+      "height": 2170,
+      "words": 318,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "SoundCloud",
+       "size": 60,
+       "tag": "h1"
+      },
+      "left": 336,
+      "right": 357,
+      "textLeft": 336,
+      "textRight": 360,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "footer.mt-20.border-t",
+      "tag": "footer",
+      "top": 2250,
+      "height": 355,
+      "words": 81,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Navigation",
+       "size": 14,
+       "tag": "h2"
+      },
+      "left": 160,
+      "right": 210,
+      "textLeft": 160,
+      "textRight": 210,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "SoundCloud to MP3",
+      "size": 60,
+      "top": 255,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 357,
+      "n": 11
+     },
+     {
+      "x": 618,
+      "n": 4
+     },
+     {
+      "x": 880,
+      "n": 4
+     },
+     {
+      "x": 336,
+      "n": 3
+     },
+     {
+      "x": 437,
+      "n": 1
+     },
+     {
+      "x": 549,
+      "n": 1
+     }
+    ],
+    "leftBlocks": 24,
+    "bodySize": 14,
+    "stage": false,
+    "explains": true,
+    "slivers": [],
+    "voidShare": 0.22,
+    "voidBox": {
+     "x": 1080,
+     "y": 120,
+     "w": 360,
+     "h": 780
+    }
+   },
+   "app": null,
+   "consoleErrors": []
+  },
+  {
+   "width": 768,
+   "height": 1024,
+   "load": "load",
+   "screens": 3,
+   "filled": [
+    0.51,
+    0.95,
+    0.85
+   ],
+   "motion": {
+    "elements": 65,
+    "css": 64,
+    "transitions": 1,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "page": {
+     "height": 2945,
+     "screens": 2.9,
+     "words": 408,
+     "img": 0,
+     "video": 0,
+     "canvas": 0,
+     "svg": 24,
+     "sections": 5,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "SoundCloud to MP3",
+     "words": 3,
+     "chars": 17,
+     "lines": 1,
+     "size": 60,
+     "vw": 7.8,
+     "font": "Space Grotesk",
+     "weight": 700,
+     "tracking": -0.025,
+     "leading": 1.05,
+     "upper": false,
+     "italic": false,
+     "mono": false,
+     "align": "center",
+     "position": "center",
+     "widthRatio": 0.88,
+     "top": 255,
+     "gradientText": true,
+     "tag": "h1",
+     "kind": "heading"
+    },
+    "h1": {
+     "text": "SoundCloud to MP3",
+     "words": 3,
+     "lines": 1,
+     "size": 60,
+     "font": "Space Grotesk"
+    },
+    "headings": [
+     {
+      "text": "SoundCloud to MP3",
+      "words": 3,
+      "chars": 17,
+      "lines": 1,
+      "size": 60,
+      "vw": 7.8,
+      "font": "Space Grotesk",
+      "weight": 700,
+      "tracking": -0.025,
+      "leading": 1.05,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.88,
+      "top": 255,
+      "gradientText": true,
+      "tag": "h1",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 1,
+     "maxLines": 1,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 1,
+     "medianWords": null,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Inter",
+       "share": 0.91,
+       "mono": false
+      },
+      {
+       "family": "Space Grotesk",
+       "share": 0.09,
+       "mono": false
+      }
+     ],
+     "familyCount": 2,
+     "sizes": [
+      12,
+      14,
+      16,
+      18,
+      24,
+      60
+     ],
+     "sizeCount": 6,
+     "notLoaded": [],
+     "body": {
+      "font": "Inter",
+      "size": 14,
+      "leading": 1.43,
+      "weight": 400,
+      "tracking": 0,
+      "contrast": 6.2
+     },
+     "measureChars": 123,
+     "max": {
+      "size": 60,
+      "vw": 7.8,
+      "font": "Space Grotesk",
+      "text": "SoundCloud"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0,
+     "centerShare": 0.09,
+     "smallText": 5
+    },
+    "eyebrows": [
+     {
+      "text": "No sign-up · no app · no queue",
+      "above": "SoundCloud to MP3",
+      "upper": false,
+      "tracked": false,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 213
+     }
+    ],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#090b0f",
+     "bodyBgHsl": {
+      "h": 220,
+      "s": 0.25,
+      "l": 0.05
+     },
+     "dark": true,
+     "sectionBgs": [],
+     "textColors": [
+      {
+       "color": "#9298a3",
+       "share": 0.68
+      },
+      {
+       "color": "#f5f5f5",
+       "share": 0.28
+      },
+      {
+       "color": "#ff7416",
+       "share": 0.04
+      },
+      {
+       "color": "#090b0f",
+       "share": 0
+      }
+     ],
+     "button": {
+      "bg": "#ff7416",
+      "hsl": {
+       "h": 24,
+       "s": 1,
+       "l": 0.54
+      },
+      "fg": "#090b0f"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 2,
+     "inHero": 2,
+     "radius": "pill",
+     "height": 40,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Paste",
+      "Fetch"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 2,
+     "shadowOverlay": 0,
+     "shadowSamples": [
+      "span.flex.h-9 → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "form.rise-in.mt-8 → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0"
+     ],
+     "gradients": 1,
+     "scrims": 0,
+     "gradientSamples": [
+      "div.hero-glow.absolute → radial-gradient(60% 70% at 50% 0%, oklab(0.715 0.131189 0.140191 / 0.35), rgba(0, 0, 0, 0) 70%)"
+     ],
+     "gradientText": 1,
+     "hairlines": 2,
+     "hairlineSamples": [
+      "footer.mt-20.border-t 768px",
+      "div.border-t.border-border/60 768px"
+     ],
+     "outlinedBoxes": 10,
+     "dashed": 0,
+     "blurred": 1,
+     "roundedBoxes": 11,
+     "boxRadius": 24,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": [
+      {
+       "count": 4,
+       "iconTopped": true,
+       "rounded": true,
+       "top": 664
+      },
+      {
+       "count": 6,
+       "iconTopped": true,
+       "rounded": true,
+       "top": 1092
+      }
+     ]
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 5,
+     "fixed": true,
+     "height": 65,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "inter",
+     "space grotesk"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "pageH": 2945,
+    "margins": {
+     "left": 16,
+     "right": 37
+    },
+    "sections": [
+     {
+      "sel": "div.flex-1.pt-16",
+      "tag": "div",
+      "top": 0,
+      "height": 2330,
+      "words": 318,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "SoundCloud",
+       "size": 60,
+       "tag": "h1"
+      },
+      "left": 16,
+      "right": 37,
+      "textLeft": 16,
+      "textRight": 38,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "footer.mt-20.border-t",
+      "tag": "footer",
+      "top": 2410,
+      "height": 535,
+      "words": 81,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Navigation",
+       "size": 14,
+       "tag": "h2"
+      },
+      "left": 16,
+      "right": 24,
+      "textLeft": 16,
+      "textRight": 24,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "SoundCloud to MP3",
+      "size": 60,
+      "top": 255,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 37,
+      "n": 13
+     },
+     {
+      "x": 413,
+      "n": 6
+     },
+     {
+      "x": 16,
+      "n": 3
+     },
+     {
+      "x": 117,
+      "n": 1
+     },
+     {
+      "x": 229,
+      "n": 1
+     }
+    ],
+    "leftBlocks": 24,
+    "bodySize": 14,
+    "stage": false,
+    "explains": true,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": null,
+   "consoleErrors": []
+  },
+  {
+   "width": 390,
+   "height": 844,
+   "load": "load",
+   "screens": 6,
+   "filled": [
+    0.48,
+    0.78,
+    0.79,
+    0.67,
+    0.93,
+    1
+   ],
+   "motion": {
+    "elements": 65,
+    "css": 64,
+    "transitions": 1,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "page": {
+     "height": 4385,
+     "screens": 5.2,
+     "words": 397,
+     "img": 0,
+     "video": 0,
+     "canvas": 0,
+     "svg": 24,
+     "sections": 5,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "SoundCloud to MP3",
+     "words": 3,
+     "chars": 17,
+     "lines": 2,
+     "size": 40,
+     "vw": 10.3,
+     "font": "Space Grotesk",
+     "weight": 700,
+     "tracking": -0.025,
+     "leading": 1.05,
+     "upper": false,
+     "italic": false,
+     "mono": false,
+     "align": "center",
+     "position": "center",
+     "widthRatio": 0.92,
+     "top": 215,
+     "gradientText": true,
+     "tag": "h1",
+     "kind": "heading"
+    },
+    "h1": {
+     "text": "SoundCloud to MP3",
+     "words": 3,
+     "lines": 2,
+     "size": 40,
+     "font": "Space Grotesk"
+    },
+    "headings": [
+     {
+      "text": "SoundCloud to MP3",
+      "words": 3,
+      "chars": 17,
+      "lines": 2,
+      "size": 40,
+      "vw": 10.3,
+      "font": "Space Grotesk",
+      "weight": 700,
+      "tracking": -0.025,
+      "leading": 1.05,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.92,
+      "top": 215,
+      "gradientText": true,
+      "tag": "h1",
+      "kind": "heading"
+     },
+     {
+      "text": "Convert a SoundCloud Link to MP3 in Four Steps",
+      "words": 9,
+      "chars": 46,
+      "lines": 2,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Space Grotesk",
+      "weight": 700,
+      "tracking": -0.025,
+      "leading": 1.33,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.92,
+      "top": 633,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Why Use CloudMP3? High-Bitrate Audio & ID3 Tag Preservation",
+      "words": 9,
+      "chars": 59,
+      "lines": 3,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Space Grotesk",
+      "weight": 700,
+      "tracking": -0.025,
+      "leading": 1.33,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.92,
+      "top": 1401,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Frequently Asked Questions About SoundCloud Audio Extraction",
+      "words": 7,
+      "chars": 60,
+      "lines": 3,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Space Grotesk",
+      "weight": 700,
+      "tracking": -0.025,
+      "leading": 1.33,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.92,
+      "top": 2705,
+      "tag": "h2",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 4,
+     "maxLines": 3,
+     "over2Lines": 2,
+     "statements": 0,
+     "centered": 1,
+     "medianWords": 9,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Inter",
+       "share": 0.91,
+       "mono": false
+      },
+      {
+       "family": "Space Grotesk",
+       "share": 0.09,
+       "mono": false
+      }
+     ],
+     "familyCount": 2,
+     "sizes": [
+      12,
+      14,
+      16,
+      18,
+      24,
+      40
+     ],
+     "sizeCount": 6,
+     "notLoaded": [],
+     "body": {
+      "font": "Inter",
+      "size": 14,
+      "leading": 1.43,
+      "weight": 400,
+      "tracking": 0,
+      "contrast": 6.2
+     },
+     "measureChars": 60,
+     "max": {
+      "size": 40,
+      "vw": 10.3,
+      "font": "Space Grotesk",
+      "text": "SoundCloud"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0,
+     "centerShare": 0.09,
+     "smallText": 5
+    },
+    "eyebrows": [
+     {
+      "text": "No sign-up · no app · no queue",
+      "above": "SoundCloud to MP3",
+      "upper": false,
+      "tracked": false,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 173
+     }
+    ],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#090b0f",
+     "bodyBgHsl": {
+      "h": 220,
+      "s": 0.25,
+      "l": 0.05
+     },
+     "dark": true,
+     "sectionBgs": [],
+     "textColors": [
+      {
+       "color": "#9298a3",
+       "share": 0.67
+      },
+      {
+       "color": "#f5f5f5",
+       "share": 0.28
+      },
+      {
+       "color": "#ff7416",
+       "share": 0.04
+      },
+      {
+       "color": "#090b0f",
+       "share": 0
+      }
+     ],
+     "button": {
+      "bg": "#ff7416",
+      "hsl": {
+       "h": 24,
+       "s": 1,
+       "l": 0.54
+      },
+      "fg": "#090b0f"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 1,
+     "inHero": 1,
+     "radius": "pill",
+     "height": 40,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Fetch"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 2,
+     "shadowOverlay": 0,
+     "shadowSamples": [
+      "span.flex.h-9 → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "form.rise-in.mt-8 → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0"
+     ],
+     "gradients": 1,
+     "scrims": 0,
+     "gradientSamples": [
+      "div.hero-glow.absolute → radial-gradient(60% 70% at 50% 0%, oklab(0.715 0.131189 0.140191 / 0.35), rgba(0, 0, 0, 0) 70%)"
+     ],
+     "gradientText": 1,
+     "hairlines": 2,
+     "hairlineSamples": [
+      "footer.mt-20.border-t 390px",
+      "div.border-t.border-border/60 390px"
+     ],
+     "outlinedBoxes": 10,
+     "dashed": 0,
+     "blurred": 1,
+     "roundedBoxes": 11,
+     "boxRadius": 24,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 1,
+     "fixed": true,
+     "height": 65,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "inter",
+     "space grotesk"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "pageH": 4385,
+    "margins": {
+     "left": 16,
+     "right": 21
+    },
+    "sections": [
+     {
+      "sel": "div.flex-1.pt-16",
+      "tag": "div",
+      "top": 0,
+      "height": 3419,
+      "words": 317,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "SoundCloud",
+       "size": 40,
+       "tag": "h1"
+      },
+      "left": 16,
+      "right": 19,
+      "textLeft": 16,
+      "textRight": 19,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "footer.mt-20.border-t",
+      "tag": "footer",
+      "top": 3499,
+      "height": 886,
+      "words": 81,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Navigation",
+       "size": 14,
+       "tag": "h2"
+      },
+      "left": 16,
+      "right": 29,
+      "textLeft": 16,
+      "textRight": 29,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "SoundCloud to MP3",
+      "size": 40,
+      "top": 215,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 37,
+      "n": 19
+     },
+     {
+      "x": 16,
+      "n": 4
+     },
+     {
+      "x": 117,
+      "n": 1
+     }
+    ],
+    "leftBlocks": 24,
+    "bodySize": 14,
+    "stage": false,
+    "explains": true,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": null,
+   "consoleErrors": []
+  }
+ ],
+ "findings": [
+  {
+   "level": "FAIL",
+   "id": "eyebrow",
+   "width": 1440,
+   "message": "1 eyebrow/kicker label(s) above headings: \"No sign-up · no app · no queue\" (pill) above \"SoundCloud to MP3\"",
+   "fix": "Delete them. If the label carried real information, fold it into the headline or the supporting sentence.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "gradient",
+   "width": 1440,
+   "message": "1 gradient fill(s): div.hero-glow.absolute → radial-gradient(60% 70% at 50% 0%, oklab(0.715 0.131189 0.140191 / 0.35), rgba(0, 0, 0, 0) 70%)",
+   "fix": "Use a flat colour or a real image. The only gradient allowed by default is a neutral scrim over a photo for legibility.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "gradient-text",
+   "width": 1440,
+   "message": "1 gradient-filled text element(s).",
+   "fix": "Solid colour text.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "shadow",
+   "width": 1440,
+   "message": "2 box-shadow(s) on elements at rest: span.flex.h-9 → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0 | form.rise-in.mt-8 → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+   "fix": "Remove. Separate surfaces with a tone step or space. Shadows are for things that really float (menus, dialogs, sticky bars).",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "hairline",
+   "width": 1440,
+   "message": "2 thin rule(s)/divider line(s): footer.mt-20.border-t 1440px | div.border-t.border-border/60 1440px",
+   "fix": "Delete. Separate with space, a tone change, or scale. Lines are only for real tables and form fields.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "outlined-box",
+   "width": 1440,
+   "message": "10 boxes drawn with a 1px outline.",
+   "fix": "Define a surface by its fill (one tone step from the page) or leave the content unboxed.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "icon-cards",
+   "width": 1440,
+   "message": "2 row(s) of identical cards each topped with a small icon (4, 6 cards).",
+   "fix": "Replace with one composed section from the direction: a narrative split, a list set in large type, or real imagery per item.",
+   "alsoAt": [
+    768
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "body-size",
+   "width": 1440,
+   "message": "Body text is 14px (the size most of the running text is set in).",
+   "fix": "Body copy 16–20px. Map small sizes from blueprints onto your body step.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "WARN",
+   "id": "grey-body",
+   "width": 1440,
+   "message": "The running text is a soft grey on its ground (6.2:1).",
+   "fix": "Set body copy in the full ink (7:1 or more). Keep the muted ink for secondary notes; pages read thin and unfinished when everything is grey.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "few-pictures",
+   "width": 1440,
+   "message": "Only 0 picture(s) on the page (0 photographs, footage or raster images, 0 interface fragments). Drawings in SVG do not count.",
+   "fix": "Find real pictures of the subject's world with scripts/assets.mjs (photographs, archival images, maps, engravings, footage), download them to assets/ and give them room: a hero picture, one per section that has a subject, a full-width band. At least four, usually six to twelve."
+  },
+  {
+   "level": "WARN",
+   "id": "no-footage",
+   "width": 1440,
+   "message": "No video anywhere on the page.",
+   "fix": "Look for one honest clip with scripts/assets.mjs --video (the place, the material, the process) and use it as a muted loop with a poster frame. Defend its absence only if no clip fits the subject."
+  },
+  {
+   "level": "WARN",
+   "id": "measure",
+   "width": 1440,
+   "message": "Longest paragraph runs about 187 characters per line.",
+   "fix": "Cap paragraphs at 45–75 characters (max-width: 60ch).",
+   "alsoAt": [
+    768
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "small-text",
+   "width": 1440,
+   "message": "5 text blocks under 13px.",
+   "fix": "Nothing meant to be read goes below 13px.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "focal-point",
+   "width": 1440,
+   "message": "The first screen has no dominant element: the largest type is 60px (4.2vw) and no single picture holds a third of the viewport.",
+   "fix": "Make one thing lead: the headline at display size, or one large picture. A grid of many small pictures is not one thing; in blind tests jurors marked a first screen without a headline down every time. On the strongest studied sites the largest type has a median of 8.4vw."
+  },
+  {
+   "level": "WARN",
+   "id": "off-centre",
+   "width": 1440,
+   "message": "The margins differ: 174px on the left, 232px on the right, at 1440px.",
+   "fix": "Put the navigation and the content on one pair of margins; check for padding on one side only, a scrollbar gutter, or a header on another inset than the page.",
+   "alsoAt": [
+    768
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "headline-lines",
+   "width": 390,
+   "message": "2 headline(s) wrap past two lines at 390px: \"Why Use CloudMP3? High-Bitrate Audio & ID3 Tag P\" → 3 lines (9 words, 24px); \"Frequently Asked Questions About SoundCloud Audi\" → 3 lines (7 words, 24px)",
+   "fix": "Cut words first (a headline is a title, not a sentence). Then give it a wider measure. Lower the size only as a last resort and never below the scale you chose. A real statement paragraph belongs in a <p> or <blockquote> at 24px or less."
+  }
+ ],
+ "images": [
+  {
+   "viewport": "desktop",
+   "width": 1440,
+   "fold": "D:\\code-archive-unpacker-main(2)\\code-archive-unpacker-main\\.taste-skill\\before\\desktop-fold.jpg",
+   "pages": [
+    "D:\\code-archive-unpacker-main(2)\\code-archive-unpacker-main\\.taste-skill\\before\\desktop-page-01.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "tablet",
+   "width": 768,
+   "fold": "D:\\code-archive-unpacker-main(2)\\code-archive-unpacker-main\\.taste-skill\\before\\tablet-fold.jpg",
+   "pages": [
+    "D:\\code-archive-unpacker-main(2)\\code-archive-unpacker-main\\.taste-skill\\before\\tablet-page-01.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "mobile",
+   "width": 390,
+   "fold": "D:\\code-archive-unpacker-main(2)\\code-archive-unpacker-main\\.taste-skill\\before\\mobile-fold.jpg",
+   "pages": [
+    "D:\\code-archive-unpacker-main(2)\\code-archive-unpacker-main\\.taste-skill\\before\\mobile-page-01.jpg"
+   ],
+   "film": []
+  }
+ ]
+}
